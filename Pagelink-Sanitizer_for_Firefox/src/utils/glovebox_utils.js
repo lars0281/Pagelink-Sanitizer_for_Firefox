@@ -1,9 +1,189 @@
-export { createTable, createTableRow , writeTableHeaderRow, writeTableRow, sortColumn, SortTable, CompareRowOfText, CompareRowOfNumbers, GetDateSortingKey, writeTableNode, writeTableCell, TableLastSortedColumn, reflow  , saveToIndexedDB_async, deleteFromIndexedDB_async, READ_DB};
-
+export { 
+    arrayBufferToBase64,
+	arrayBufferToString,
+    base64ToArrayBuffer,
+	CompareRowOfNumbers,
+    CompareRowOfText,
+	convertArrayBufferViewtoString,
+	convertStringToArrayBufferView,
+	createTable,
+    createTableRow,
+    download_file,
+    GetDateSortingKey,
+    reflow,
+    setup_database_objects_table_async,
+    SHA1,
+    sortColumn,
+    SortTable,
+    stringToArrayBuffer,
+    TableLastSortedColumn,
+    updateObject,
+    writeTableCell,
+    writeTableHeaderRow,
+    writeTableNode,
+    writeTableRow
+    };
 
 /* v 1.0.0
  * Standard "toolkit" across all Glovebox's add-ons
  */
+
+
+    import {
+//    	create_indexeddb_async,
+//        deleteFromIndexedDB_async,
+//        dump_db,
+//        flush_all_keys_async,
+    	loadFromIndexedDB_async,
+//        READ_DB_async,
+    	saveToIndexedDB_async
+    }
+    from "./glovebox_db_ops.js"
+
+    import {
+
+    	deleteObject,updateObject
+    }
+    from "../rule-admin.js"
+
+    
+    
+//create table for database objects
+//append the created table node object as a child to the node passed in the "node" parameter
+function setup_database_objects_table_async(indexedDbName, objectStoreName, keyId_json_path,table_id, node, table_conf, header_conf,column_conf) {
+
+	/*
+	 * indexedDbName
+	 * objectStore
+	 * 
+	 * 
+	 */
+	try {
+	 return new Promise(
+		        function (resolve, reject) {
+
+	
+//var table_conf = JSON.parse(JSON.stringify(t));
+//var header_conf = JSON.parse(JSON.stringify(h));
+//var column_conf = JSON.parse(JSON.stringify(c));
+
+
+console.debug("# setup_database_objects_table" );
+ //console.debug("objectStore: " + objectStoreName);
+//console.debug("indexedDbName: " + indexedDbName);
+ // console.debug("node: " + JSON.stringify(node));
+	
+  //console.debug("table_conf: " + JSON.stringify(table_conf));
+  //console.debug("header_conf: " + JSON.stringify(header_conf));
+  //console.debug("column_conf: " + JSON.stringify(column_conf));
+
+ 
+     // ##########
+     // list all objects in db
+     // ##########
+
+
+     // var table_obj = createTable(table_conf, key);
+
+     var div_table_obj = document.createElement("div");
+     div_table_obj.setAttribute("class", "tableContainer");
+     var table_obj = document.createElement("table");
+
+   table_obj.setAttribute("class", "scrollTable");
+     table_obj.setAttribute("width", "100%");
+     table_obj.setAttribute("id", table_id);
+     table_obj.setAttribute("indexedDbName", indexedDbName);
+     table_obj.setAttribute("objectStoreName", objectStoreName);
+     
+
+     div_table_obj.appendChild(table_obj);
+
+     var thead = document.createElement("thead");
+     thead.setAttribute("class", "fixedHeader");
+     thead.appendChild(writeTableHeaderRow(header_conf));
+
+     table_obj.appendChild(thead);
+
+     node.appendChild(table_obj);
+
+     var tbody = document.createElement("tbody");
+     tbody.setAttribute("class", "scrollContent");
+  
+     node.appendChild(tbody);
+
+     var dbRequest = indexedDB.open(indexedDbName);
+     dbRequest.onerror = function (event) {
+         reject(Error("Error text"));
+     };
+
+     dbRequest.onupgradeneeded = function (event) {
+         // Objectstore does not exist. Nothing to load
+         event.target.transaction.abort();
+         reject(Error('Not found'));
+     };
+
+ 
+     dbRequest.onsuccess = function (event) {
+         var database = event.target.result;
+         var transaction = database.transaction(objectStoreName, 'readonly');
+         var objectStore = transaction.objectStore(objectStoreName);
+
+         if ('getAll' in objectStore) {
+             // IDBObjectStore.getAll() will return the full set of items
+             // in our store.
+            objectStore.getAll().onsuccess = function (event) {
+                 const res = event.target.result;
+                 // console.debug(res);
+       for (const url of res) {
+
+                           const tr = writeTableRow(url, column_conf, keyId_json_path);
+
+                     // create add row to table
+
+                     tbody.appendChild(tr);
+
+                 }
+
+             };
+             // add a line where information on a new key can be added to
+             // the database.
+             // document.querySelector("button.onAddDecryptionKey").onclick
+             // = this.onAddDecryptionKey;
+
+         } else {
+             // Fallback to the traditional cursor approach if getAll
+             // isn't supported.
+   
+             var timestamps = [];
+             objectStore.openCursor().onsuccess = function (event) {
+                 var cursor = event.target.result;
+                 if (cursor) {
+                     console.debug(cursor.value);
+                     // timestamps.push(cursor.value);
+                     cursor.continue();
+                 } else {
+                     // logTimestamps(timestamps);
+                 }
+             };
+
+ 
+         }
+
+     };
+     table_obj.appendChild(tbody);
+     node.appendChild(table_obj);
+     resolve (div_table_obj);
+
+     
+});
+} catch (e) {
+ console.debug(e)
+}
+
+
+}
+
+
 
 var TableLastSortedColumn = -1;
 
@@ -46,11 +226,26 @@ function createTable(data, table_conf, row_conf, column_conf) {
 }
 
 
+
+function stringToArrayBuffer(str) {
+    var buf = new ArrayBuffer(str.length * 2);
+    var bufView = new Uint16Array(buf);
+    for (var i = 0, strLen = str.length; i < strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
+}
+
+function arrayBufferToString(buf) {
+    return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+
+
 function createTableRow(data, row_conf, column_conf) {
-// console.debug("# createTableRow start" );
-	// console.debug("data: " + JSON.stringify(data));
-  // console.debug("row_conf: " + JSON.stringify(row_conf));
- // console.debug("column_conf: " + JSON.stringify(column_conf));
+ console.debug("# createTableRow start" );
+ console.debug("data: " + JSON.stringify(data));
+ console.debug("row_conf: " + JSON.stringify(row_conf));
+ console.debug("column_conf: " + JSON.stringify(column_conf));
 	
      
     var row_obj = null;
@@ -93,11 +288,9 @@ function createTableRow(data, row_conf, column_conf) {
 // http://www.imaputz.com/cssStuff/bigFourVersion.html
 
 // return table row (header) object
-function writeTableHeaderRow(row_conf, table_id) {
-    // console.debug("## writeTableHeaderRow");
-    // console.debug(row_conf);
-
-    // <thead><tr> </tr></thead>
+function writeTableHeaderRow(row_conf) {
+   //  console.debug("## writeTableHeaderRow");
+ 
 
     var tr = null;
 
@@ -401,12 +594,7 @@ function writeTableNode(rule, node_conf, type, key) {
         // node configuration has sub nodes ?
         if (node_conf.hasOwnProperty('subnodes')) {
 
-            // console.debug("###### has sub nodes ");
-
-            // console.debug("###### has sub nodes " +
-            // JSON.stringify(n.subnodes));
-            // console.debug("###### has sub nodes " + n.subnodes.length);
-
+       
             for (var i = 0; i < node_conf.subnodes.length; i++) {
                 // var obj = node_conf.subnodes[i];
                 // console.debug("###### has sub nodes " + JSON.stringify(obj));
@@ -438,7 +626,7 @@ function writeTableNode(rule, node_conf, type, key) {
                 // deleteDecryptionKey:" +
                 // func);
                 node.addEventListener('click', function () {
-                    deleteObject(rule.keyId, type, key)
+                    deleteObject(event);
                 })
                 break;
             case "updateObject":
@@ -447,14 +635,14 @@ function writeTableNode(rule, node_conf, type, key) {
                 // func);
                 node.addEventListener('click', function (event) {
                     console.debug(event);
-                    updateObject(rule.keyId, type, key, rule)
+                    updateObject(event);
                 })
                 break;
-            case "exportPrivateKey":
+            case "exportObject":
                 // console.debug("####node has event listener exportPrivateKey:" +
                 // func);
                 node.addEventListener('click', function () {
-                    exportPrivateKey(rule.keyId)
+                	exportObject(event);
                 })
                 break;
             }
@@ -463,89 +651,92 @@ function writeTableNode(rule, node_conf, type, key) {
         console.debug(e)
     }
     return node;
-
 }
 
 
 
-// return tr object
-function writeTableRow(rule, column_conf, type, key) {
-    // console.debug("## writeTableRow");
-    // console.debug("rule " + JSON.stringify(rule));
-    // console.debug("column_conf " + JSON.stringify(column_conf));
-    // console.debug("key " + JSON.stringify(key));
-    // console.debug("type " + JSON.stringify(type));
 
+
+
+// return tr object
+function writeTableRow(row_data, column_conf, keyId_json_path) {
+    //console.trace("## writeTableRow");
+    //console.trace("row_data " + JSON.stringify(row_data));
+    //console.trace("column_conf " + JSON.stringify(column_conf));
+    //console.trace("key " + JSON.stringify(key));
+   // console.trace("type " + JSON.stringify(type));
+
+    // start a table row
      const tr = document.createElement("tr");
      try {
-        // look through the column definions to what goes into the fields in a
-        // table
-        // row
-        for (var i = 0; i < column_conf.length; i++) {
-            var obj = column_conf[i];
+    	 
+    	
+    	 
+        // look through the column definitions as to what goes into the fields in a
+        // table row. For each definition create a data cell (td) in the table row (tr)
+    	 var i = 0;
+       	while (i < column_conf.length  && i < 15){
+       		
+       	 // each table row represents a unique value in the database. Add a reference to this in the row objwct itself
+       	 
+       	
+       	 if (row_data.hasOwnProperty(keyId_json_path)) {
+             tr.setAttribute('object_id', row_data[keyId_json_path]);
+         }
+       		
+            var cell_conf = column_conf[i];
+         //   console.debug("cell_conf " + JSON.stringify(cell_conf));
 
             var i_col = document.createElement("td");
 
             // present according to the specification in the "format"-field in
             // the column configuration
             var presentation_format = "text";
-            if (obj.hasOwnProperty('presentation_format')) {
-                presentation_format = obj.presentation_format;
+            if (cell_conf.hasOwnProperty('presentation_format')) {
+                presentation_format = cell_conf.presentation_format;
             }
-
-            if (obj.hasOwnProperty('json_path')) {
-            	// use value json_path to lookup the data structure
+            // add any additional attributes to the node
+            if (cell_conf.hasOwnProperty('other_attributes')) {
+                for (var a = 0; a < cell_conf.other_attributes.length; a++){
+                    Object.keys(cell_conf.other_attributes[a]).forEach(function(key) {
+                    	  i_col.setAttribute(key, cell_conf.other_attributes[a][key]);
+                    	})
+                	
+                }
+            }
+            
+            if (cell_conf.hasOwnProperty('json_path')) {
+            	// use value json_path to lookup in the row_data json structure
             	
-            	var cell_data = rule[obj.json_path];
+            	var cell_data = row_data[cell_conf.json_path];
             	
-                // use json_path as path to look for value in JSON datastructure
-            // console.debug("json_path: " + obj.json_path);
-
-                // console.debug(url[obj.attribute]);
-              // console.debug(obj.attribute);
                 if (presentation_format == "JSON") {
-// i_col.innerHTML = JSON.stringify(cell_data);
+
                     i_col.appendChild(document.createTextNode(JSON.stringify(cell_data)));
                 } else if (presentation_format == "table") {
                     // render a table inside the cell based on the detailed
                     // specifications contained in the "cell_table_column_conf"
                     // is not was specified, forget it.
-                    if (obj.hasOwnProperty('cell_table_conf')) {
-                        var cell_table_conf = obj.cell_table_conf;
-    // console.debug("### cell_table_conf");
-  // console.debug("table config" + JSON.stringify(cell_table_conf));
+                    if (cell_conf.hasOwnProperty('cell_table_conf')) {
+                        var cell_table_conf = cell_conf.cell_table_conf;
 
-                     // console.debug("table data" +
-						// JSON.stringify(rule[obj.json_path]));
-                        var cell_table = document.createElement("table");
+                     var cell_table = document.createElement("table");
                         cell_table.setAttribute('class', cell_table_conf.table_conf.class);
 
-
-                        
-                      // console.debug("cell_table1: ");
-                      // console.debug(cell_table);
-
-                     // console.debug("##############################");
-                    // console.debug("row data: " +
-					// JSON.stringify(rule[obj.json_path]));
-                    // console.debug(JSON.stringify(rule[obj.json_path].length));
 
                         // loop through all data objects that need a separate
                         // row in the cell-level
                         // table
                         var cell_table_row_count = cell_data.length;
                         
-                   // console.debug("cell_table_row_count: " +
-					// cell_table_row_count);
                         // set a maximum of row permitted in a table embedded
 						// inside a cell
                         var max_cell_table_rows = 8;
                         var k = 0;
                         while (k < cell_table_row_count && k < max_cell_table_rows) {
                         	var cell_data_row = cell_data[k];
-                        // console.debug("cell_data_row: " +
-						// JSON.stringify(cell_data_row));
-                            var cell_table_row = document.createElement("tr");
+
+                        	var cell_table_row = document.createElement("tr");
                             cell_table_row.setAttribute('class', cell_table_conf.row_conf.class);
               
                             // loop through all cells configure for this row
@@ -554,41 +745,31 @@ function writeTableRow(rule, column_conf, type, key) {
 
 
                             // iterate over the number of configured columns
-							// (max 5)
-                            var max_cell_table_cells = 5;
+							// (max 15)
+                            var max_cell_table_cells = 15;
                             var m = 0;
                             while (m < cell_table_row_cell_count && m < max_cell_table_cells) {
                             	var cell_table_column_conf = cell_table_conf.column_conf[m];
                                 var cell_table_cell = document.createElement("td");
-                                // console.debug(cell_table_conf.column_conf[i].class);
-                                cell_table_cell.setAttribute('class', cell_table_column_conf.class);
+                                if(cell_table_column_conf.class){
+                                	cell_table_cell.setAttribute('class', cell_table_column_conf.class);
+                                }
                                 try {
                                 var cell_data_path = cell_table_column_conf.json_path;
-                         // console.debug("path to cell data: " +
-							// cell_data_path);
-                        // console.debug("path to cell config data: " +
-						// JSON.stringify(cell_table_conf.column_conf[m]));
-
-                              var presentation_format = cell_table_column_conf.presentation_format;
-								// cell_table_conf.column_conf[m].presentation_format;
-                           // console.debug("presentation_format: " +
-							// presentation_format);
-
-                              // depending on the presentaiont format take
+                                // look for path in "cell_data_path" variable in the row_data object
+                               var presentation_format = cell_table_column_conf.presentation_format;
+			
+                              // depending on the presentation format take
 								// configurable action here
                               if (presentation_format == "table"){
                             	  // create a small table to contain the list
 
                             	  var list_table = createTable( cell_data_row[cell_data_path], cell_table_column_conf.cell_table_conf.table_conf, cell_table_column_conf.cell_table_conf.row_conf, cell_table_column_conf.cell_table_conf.column_conf);
-	// console.debug(list_table);
-                            	  cell_table_cell.appendChild(list_table);
+	                          	  cell_table_cell.appendChild(list_table);
     
                               }else{
                             	  // present the data as text
-                               
-                     // console.debug("cell data: " +
-						// JSON.stringify(rule[obj.json_path][k][cell_data_path]));
-                                    var newContent = document.createTextNode(cell_data_row[cell_data_path]);
+                                     var newContent = document.createTextNode(cell_data_row[cell_data_path]);
                                     cell_table_cell.appendChild(newContent);
                               }
                                 } catch (e) {
@@ -612,15 +793,12 @@ function writeTableRow(rule, column_conf, type, key) {
                     // render a dropdown list
 
                 } else {
-                	  i_col.appendChild(document.createTextNode(rule[obj.json_path]));
-                    // i_col.innerHTML = rule[obj.json_path];
+                	// for all other, treat as cell content as plain text
+                	  i_col.appendChild(document.createTextNode(row_data[cell_conf.json_path]));
                 }
-            } else if (obj.hasOwnProperty('node')) {
+            } else if (cell_conf.hasOwnProperty('node')) {
 
-                // var n = obj.node;
-                // console.debug("node definition " + JSON.stringify(obj.node));
-
-                var node = writeTableNode(rule, obj.node, type, key);
+                       var node = writeTableNode(row_data, cell_conf.node);
 
                 // any eventlisteners defined ?
 
@@ -629,6 +807,7 @@ function writeTableRow(rule, column_conf, type, key) {
             }
             tr.setAttribute("class", "normalRow");
             tr.appendChild(i_col);
+            i++;
         }
     } catch (e) {
         console.error(e)
@@ -643,196 +822,228 @@ function reflow(elt) {
 }
 
 
+function download_file(name, contents, mime_type) {
 
-function saveToIndexedDB_async(dbName, storeName, keyId, object) {
+    console.debug("download_file BEGIN");
 
-    console.debug("saveToIndexedDB_async:dbname " + dbName);
-    console.debug("saveToIndexedDB_async:objectstorename " + storeName);
-    console.debug("saveToIndexedDB_async:keyId " + keyId);
-    console.debug("saveToIndexedDB_async:object " + JSON.stringify(object));
+    mime_type = mime_type || "text/plain";
 
-    // indexedDB = window.indexedDB || window.webkitIndexedDB ||
-    // window.mozIndexedDB || window.msIndexedDB;
+    var blob = new Blob([contents], {
+            type: mime_type
+        });
 
-    return new Promise(
-        function (resolve, reject) {
+    var dlink = document.createElement('a');
+    dlink.download = name;
+    dlink.href = window.URL.createObjectURL(blob);
+    dlink.onclick = function (e) {
+        // revokeObjectURL needs a delay to work properly
+        var that = this;
+        setTimeout(function () {
+            window.URL.revokeObjectURL(that.href);
+        }, 1500);
+    };
 
-        // console.debug("saveToIndexedDB: 0 resolve=" + resolve )
-        // console.debug("saveToIndexedDB: 0 reject=" + reject )
-
-        // if (object.taskTitle === undefined)
-        // reject(Error('object has no taskTitle.'));
-
-        var dbRequest;
-
-        try {
-
-            dbRequest = indexedDB.open(dbName);
-        } catch (error) {
-            console.debug(error);
-
-        }
-        console.debug("saveToIndexedDB_async: 1 dbRequest=" + dbRequest);
-
-        dbRequest.onerror = function (event) {
-            console.debug("saveToIndexedDB:error.open:db " + dbName);
-            reject(Error("IndexedDB database error"));
-        };
-
-        console.debug("saveToIndexedDB: 2" + JSON.stringify(dbRequest));
-
-        dbRequest.onupgradeneeded = function (event) {
-            console.debug("saveToIndexedDB: 21");
-            var database = event.target.result;
-            console.debug("saveToIndexedDB:db create obj store " + storeName);
-            var objectStore = database.createObjectStore(storeName, {
-                    keyId: keyId
-                });
-        };
-
-        console.debug("saveToIndexedDB: 3" + JSON.stringify(dbRequest));
-        try {
-
-            dbRequest.onsuccess = function (event) {
-                console.debug("saveToIndexedDB: 31");
-                var database = event.target.result;
-                console.debug("saveToIndexedDB: 32");
-                var transaction = database.transaction([storeName], 'readwrite');
-                console.debug("saveToIndexedDB: 33");
-                var objectStore = transaction.objectStore(storeName);
-                console.debug("saveToIndexedDB:objectStore put: " + JSON.stringify(object));
-
-                var objectRequest = objectStore.put(object); // Overwrite if
-                // already
-                // exists
-
-                console.debug("saveToIndexedDB:objectRequest: " + JSON.stringify(objectRequest));
-
-                objectRequest.onerror = function (event) {
-                    console.debug("saveToIndexedDB:error: " + storeName);
-
-                    reject(Error('Error text'));
-                };
-
-                objectRequest.onsuccess = function (event) {
-                    console.debug("saveToIndexedDB:success: " + storeName);
-                    resolve('Data saved OK');
-                };
-            };
-
-        } catch (error) {
-            console.debug(error);
-
-        }
-
-    });
+    dlink.click();
+    dlink.remove();
+    console.debug("download_file END");
 }
 
 
-function READ_DB(db, dbName3, storeName3) {
 
-    return new Promise((resolve, reject) => {
-
-        try {
-            var one;
-
-            console.debug("reading db:" + db + " dbname:" + dbName3 + " storeName:" + storeName3);
-            var dbRequest = indexedDB.open(db);
-
-            dbRequest.onerror = function () {
-                console.debug("Error", dbRequest.error);
-                console.error("Error", dbRequest.error);
-            };
-            dbRequest.onupgradeneeded = function () {
-                console.debug("onupgradeneeded ");
-                console.error("onupgradeneeded ");
-            };
-
-            dbRequest.onsuccess = function (event3) {
-                console.debug("one " + one);
-                console.debug("db:" + db + " dbname:" + dbName3 + " storeName:" + storeName3);
-                var database3 = event3.target.result;
-                console.debug("2");
-                // open database on read-only mode
-                var transaction3 = database3.transaction([storeName3], 'readonly');
-                var objectStore3 = transaction3.objectStore(storeName3);
-                console.debug("3");
-                var allRecords3 = objectStore3.getAll();
-                console.debug("4");
-                allRecords3.onsuccess = function () {
-                    const res3 = allRecords3.result;
-                    // get private(and their public component) signing keys
-                    database3.close();
-                    one = JSON.stringify(res3);
-                    console.debug("returning from database: " + one);
-                    resolve(one);
-                };
-                database3.close();
+/**
+ * Secure Hash Algorithm (SHA1)
+ * http://www.webtoolkit.info/
+ **/
+function SHA1(msg) {
+    console.debug("navigate-collection:SHA1");
+    function rotate_left(n, s) {
+        var t4 = (n << s) | (n >>> (32 - s));
+        return t4;
+    };
+    function lsb_hex(val) {
+        var str = '';
+        var i;
+        var vh;
+        var vl;
+        for (i = 0; i <= 6; i += 2) {
+            vh = (val >>> (i * 4 + 4)) & 0x0f;
+            vl = (val >>> (i * 4)) & 0x0f;
+            str += vh.toString(16) + vl.toString(16);
+        }
+        return str;
+    };
+    function cvt_hex(val) {
+        var str = '';
+        var i;
+        var v;
+        for (i = 7; i >= 0; i--) {
+            v = (val >>> (i * 4)) & 0x0f;
+            str += v.toString(16);
+        }
+        return str;
+    };
+    function Utf8Encode(string) {
+        string = string.replace(/\r\n/g, '\n');
+        var utftext = '';
+        for (var n = 0; n < string.length; n++) {
+            var c = string.charCodeAt(n);
+            if (c < 128) {
+                utftext += String.fromCharCode(c);
+            } else if ((c > 127) && (c < 2048)) {
+                utftext += String.fromCharCode((c >> 6) | 192);
+                utftext += String.fromCharCode((c & 63) | 128);
+            } else {
+                utftext += String.fromCharCode((c >> 12) | 224);
+                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                utftext += String.fromCharCode((c & 63) | 128);
             }
-
-        } catch (e) {
-            console.debug(e);
-            reject();
         }
+        return utftext;
+    };
+    var blockstart;
+    var i,
+    j;
+    var W = new Array(80);
+    var H0 = 0x67452301;
+    var H1 = 0xEFCDAB89;
+    var H2 = 0x98BADCFE;
+    var H3 = 0x10325476;
+    var H4 = 0xC3D2E1F0;
+    var A,
+    B,
+    C,
+    D,
+    E;
+    var temp;
+    msg = Utf8Encode(msg);
+    var msg_len = msg.length;
+    var word_array = new Array();
+    for (i = 0; i < msg_len - 3; i += 4) {
+        j = msg.charCodeAt(i) << 24 | msg.charCodeAt(i + 1) << 16 |
+            msg.charCodeAt(i + 2) << 8 | msg.charCodeAt(i + 3);
+        word_array.push(j);
+    }
+    switch (msg_len % 4) {
+    case 0:
+        i = 0x080000000;
+        break;
+    case 1:
+        i = msg.charCodeAt(msg_len - 1) << 24 | 0x0800000;
+        break;
+    case 2:
+        i = msg.charCodeAt(msg_len - 2) << 24 | msg.charCodeAt(msg_len - 1) << 16 | 0x08000;
+        break;
+    case 3:
+        i = msg.charCodeAt(msg_len - 3) << 24 | msg.charCodeAt(msg_len - 2) << 16 | msg.charCodeAt(msg_len - 1) << 8 | 0x80;
+        break;
+    }
+    word_array.push(i);
+    while ((word_array.length % 16) != 14)
+        word_array.push(0);
+    word_array.push(msg_len >>> 29);
+    word_array.push((msg_len << 3) & 0x0ffffffff);
+    for (blockstart = 0; blockstart < word_array.length; blockstart += 16) {
+        for (i = 0; i < 16; i++)
+            W[i] = word_array[blockstart + i];
+        for (i = 16; i <= 79; i++)
+            W[i] = rotate_left(W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16], 1);
+        A = H0;
+        B = H1;
+        C = H2;
+        D = H3;
+        E = H4;
+        for (i = 0; i <= 19; i++) {
+            temp = (rotate_left(A, 5) + ((B & C) | (~B & D)) + E + W[i] + 0x5A827999) & 0x0ffffffff;
+            E = D;
+            D = C;
+            C = rotate_left(B, 30);
+            B = A;
+            A = temp;
+        }
+        for (i = 20; i <= 39; i++) {
+            temp = (rotate_left(A, 5) + (B ^ C ^ D) + E + W[i] + 0x6ED9EBA1) & 0x0ffffffff;
+            E = D;
+            D = C;
+            C = rotate_left(B, 30);
+            B = A;
+            A = temp;
+        }
+        for (i = 40; i <= 59; i++) {
+            temp = (rotate_left(A, 5) + ((B & C) | (B & D) | (C & D)) + E + W[i] + 0x8F1BBCDC) & 0x0ffffffff;
+            E = D;
+            D = C;
+            C = rotate_left(B, 30);
+            B = A;
+            A = temp;
+        }
+        for (i = 60; i <= 79; i++) {
+            temp = (rotate_left(A, 5) + (B ^ C ^ D) + E + W[i] + 0xCA62C1D6) & 0x0ffffffff;
+            E = D;
+            D = C;
+            C = rotate_left(B, 30);
+            B = A;
+            A = temp;
+        }
+        H0 = (H0 + A) & 0x0ffffffff;
+        H1 = (H1 + B) & 0x0ffffffff;
+        H2 = (H2 + C) & 0x0ffffffff;
+        H3 = (H3 + D) & 0x0ffffffff;
+        H4 = (H4 + E) & 0x0ffffffff;
+    }
+    var temp = cvt_hex(H0) + cvt_hex(H1) + cvt_hex(H2) + cvt_hex(H3) + cvt_hex(H4);
 
-    });
-
-    // return one;
+    return temp.toLowerCase();
 }
 
 
 
-function deleteFromIndexedDB_async(dbName, storeName, keyId) {
-    console.debug("deleteFromIndexedDB:1 " + dbName);
-    console.debug("deleteFromIndexedDB:2 " + storeName);
-    console.debug("deleteFromIndexedDB:3 " + keyId);
 
-    // indexedDB = window.indexedDB || window.webkitIndexedDB ||
-    // window.mozIndexedDB || window.msIndexedDB;
 
-    return new Promise(
-        function (resolve, reject) {
+function convertStringToArrayBufferView(str) {
+    var bytes = new Uint8Array(str.length);
+    for (var iii = 0; iii < str.length; iii++) {
+        bytes[iii] = str.charCodeAt(iii);
+    }
 
-        var dbRequest = indexedDB.open(dbName);
-
-        // console.debug("deleteFromIndexedDB: 1 dbRequest=" + dbRequest)
-
-        dbRequest.onerror = function (event) {
-            console.debug("deleteFromIndexedDB:error.open:db " + dbName);
-            reject(Error("IndexedDB database error"));
-        };
-
-        // console.debug("deleteFromIndexedDB: 2")
-
-        dbRequest.onupgradeneeded = function (event) {
-            console.debug("deleteFromIndexedDB: 21")
-            var database = event.target.result;
-            console.debug("deleteFromIndexedDB:db create obj store " + storeName);
-            var objectStore = database.createObjectStore(storeName, {
-                    keyId: keyId
-                });
-        };
-
-        // console.debug("deleteFromIndexedDB: 3")
-
-        dbRequest.onsuccess = function (event) {
-            // console.debug("deleteFromIndexedDB: 31")
-            var database = event.target.result;
-            var transaction = database.transaction([storeName], 'readwrite');
-            var objectStore = transaction.objectStore(storeName);
-            var objectRequest = objectStore.delete(keyId); // Overwrite if
-            // exists
-
-            objectRequest.onerror = function (event) {
-                console.debug("deleteFromIndexedDB:error: " + storeName + "/" + keyId);
-
-                reject(Error('Error text'));
-            };
-
-            objectRequest.onsuccess = function (event) {
-                console.debug("deleteFromIndexedDB:success: " + storeName + "/" + keyId);
-                resolve('Data saved OK');
-            };
-        };
-    });
+    return bytes;
 }
+
+function convertArrayBufferViewtoString(buffer) {
+    var str = "";
+    for (var iii = 0; iii < buffer.byteLength; iii++) {
+        str += String.fromCharCode(buffer[iii]);
+    }
+
+    return str;
+}
+
+
+
+function base64ToArrayBuffer(base64) {
+    var binary_string = window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array(len);
+    const buffer = new ArrayBuffer(8);
+    for (var i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+
+function arrayBufferToBase64(buffer) {
+    var binary = '';
+    var bytes = new Uint8Array(buffer);
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+}
+
+
+
+
+
+
+

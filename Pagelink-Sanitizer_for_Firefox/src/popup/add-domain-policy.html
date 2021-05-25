@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<link rel="stylesheet" href="add-policy.css">
+
+<title>add policy for a whole domain</title>
+</head>
+<body>
+<br>
+
+
+
+<table class="single_rule_table">
+
+<!-- The table contains both editable and non-editable parameter values. Use different class names to make this distinction.
+(The parameters names are always non-editable). The user modifiable values are either typed by the user or selected from a drop-down list.
+
+The class option for parameter values are the following.
+
+editable_user_typed_value
+editable_user_selected_value
+noneditable_user_typed_value
+noneditable_user_selected_value
+
+-->
+
+
+<tr class="table" id="url_match_table"><td>match this domain</td><td class="editable_user_typed_value_editing" j_name="url_match" contenteditable="true"></td></tr>
+<tr class="table" id="notes_table"><td>notes</td><td class="editable_user_typed_value_editing" j_name="notes" contenteditable="true"></td></tr>
+
+<tr class="hidden" id="scope_table"><td class="hidden">scope</td><td class="hidden" j_name="scope" >Domain</td></tr>
+
+</table>
+
+<button class="rulelevel_button" id="add_policy_button">Save changes</button>
+
+
+ 
+<script src="/popup/add-policy.js"></script>
+</body>
+</html>

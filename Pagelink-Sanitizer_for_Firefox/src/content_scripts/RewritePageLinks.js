@@ -1,7 +1,7 @@
 /*
  * This script runs in pages
  *
- * Fist thing it does is to check if the page URL is governed by a policy. This will mostly not be the case and it is essential that the script runs as little as possible.
+ * Fist thing it does is to check if the page URL is governed by a policy. This will mostly not be the case and it is essential that this script runs as little as possible.
  *
  *
  * It presents a dialog window to the user with an explanation of the URL.
@@ -482,22 +482,173 @@ function RevealUrl(request, sender, sendResponse) {
 
 
 /**
- * Substitutes URL link in nodes.
- * If the node contains more than just text (ex: it has child nodes),
- * call replaceText() on each of its children.
+ * rewrite the URL links to make them inoperative.
+ * The rewrite the content of the attributes such that a repeated search will miss the URL as it would be strongly undersaible to revisit the same links again and again
+ * Specifically: insert a space character at the begining
+ * 
  *
  * @param  {Node} node    - The target DOM Node.
  * @return {void}         - Note: the emoji substitution is done inline.
  */
 function replaceLink (node) {
-  // Setting textContent on a node removes all of its children and replaces
-  // them with a single text node. Since we don't want to alter the DOM aside
-  // from substituting text, we only substitute on single text nodes.
-  // @see https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent
 
-	console.debug("node: " );
-	console.debug(node);
-	console.debug("node.nodeType: " + node.nodeType);
+	// html standard		
+	
+	// https://www.w3schools.com/tags/att_href.asp
+	
+	// href attribute on
+	// area a link base
+
+	// https://www.w3schools.com/tags/att_src.asp
+
+	// src attribute on
+	// script, img, iframe, embed, audio, imput source track video
+	
+	
+	// use queryselector to look for node with href or src attributes 
+	
+	// with 
+	
+	// css selector syntax https://www.w3schools.com/cssref/css_selectors.asp
+	
+	// Find all nodes with the href attribute
+	// Only consider urls that starts with the protocol - relative links should be ignored. 
+	// The filter should match only onses - after rewriting, the link should no longer be a match. 
+	// Make this so by adding a space at the beginning. In this way the selector will miss the URL, and the link is also disabled.
+	
+	
+	try{
+		console.debug(node);
+		// First: the href attribute and the elements that can contains one, excepting the typically clickacble links using the "a" element
+var x = node.querySelectorAll('link[href^="http"],area[href^="http"],base[href^="http"]');
+
+console.debug(node);
+console.debug("result count: " + x.length );
+	 var i;
+	 for (i = 0; i < x.length; i++) {
+
+			
+			var l = x[i].getAttribute("href");
+
+			// Attach javascript to the link that would allow the user to access the links manually. 
+			x[i].setAttribute("test", l);
+			// Rewrite the search hit so that it will not be a search hit again - and disable the URLs at the same time
+			// Disable the link by inserting a space
+			x[i].setAttribute("href"," _hhh" +l);
+			
+	 } 
+	 
+	 // treat clickable links separately. For these link also attach an event listener
+
+	 var y = node.querySelectorAll('a[href^="http"]');
+
+	 	 var j;
+	 	 for (j = 0; j < y.length; j++) {
+
+	 			
+	 			var url = y[j].getAttribute("href");
+
+	 			// Attach javascript to the link that would allow the user to access the links manually. 
+	 			 y[j].setAttribute("test", "url");
+	 			// Rewrite the search hit so that it will not be a search hit again - and disable the URLs at the same time
+	 			// Disable the link by inserting a space
+	 			 y[j].setAttribute("href","DISABLED" +url);
+	 			
+	 	 } 
+
+	 
+	 
+		// Secondly: the src attribute and the elements that can contains one
+	 var z = node.querySelectorAll('script[src^="http"],img[src^="http"],iframe[src^="http"],embed[src^="http"],audio[src^="http"],input[src^="http"],source[src^="http"],track[src^="http"],video[src^="http"]');
+	 var k=0;
+	 for (k = 0; k < z.length; k++) {
+
+			
+			var src = z[k].getAttribute("src");
+
+			// Attach javascript to the link that would allow the user to access the links manually. 
+			z[k].setAttribute("test", src);
+			// Rewrite the search hit so that it will not be a search hit again - and disable the URLs at the same time
+			// Disable the link by inserting a space
+			z[k].setAttribute("src","DISABLED" +src);
+			
+	 } 
+	 
+	 
+	 
+	}catch(e){
+		console.debug(e);
+	}
+	 
+	 
+	 
+	//try{
+
+	//	var elmnts = node.getElementsByTagName("a");
+		
+		//var j=0;
+		//for(j=0;j<elmnts.length ;j++){
+		//var attr = elmnts[j].getAttributeNode("href"); 
+		//console.debug(attr );
+		
+		//elmnts[j].setAttribute('archived_href' , attr);
+		
+//	}
+		
+	//console.debug("node: " );
+	//console.debug(node);
+	//console.debug(node.attributes);
+	//console.debug(node.getAttribute);
+	//console.debug("#node.nodeType: " + node.nodeType);
+	
+	
+// use	querySelectorAll to look for nodes with links
+	
+	
+	
+	
+	
+	
+	/*
+	 * Node.ELEMENT_NODE 	1 	An Element node like <p> or <div>.
+Node.ATTRIBUTE_NODE 	2 	An Attribute of an Element.
+Node.TEXT_NODE 	3 	The actual Text inside an Element or Attr.
+Node.CDATA_SECTION_NODE 	4 	A CDATASection, such as <!CDATA[[ … ]]>.
+Node.PROCESSING_INSTRUCTION_NODE 	7 	A ProcessingInstruction of an XML document, such as <?xml-stylesheet … ?>.
+Node.COMMENT_NODE 	8 	A Comment node, such as <!-- … -->.
+Node.DOCUMENT_NODE 	9 	A Document node.
+Node.DOCUMENT_TYPE_NODE 	10 	A DocumentType node, such as <!DOCTYPE html>.
+Node.DOCUMENT_FRAGMENT_NODE 	11 	A DocumentFragment node.
+	 * 
+	 */
+
+	  if (node.nodeType === Node.ELEMENT_NODE) {
+		  console.debug("## examine this element ( a or img ? )");
+		  
+		  console.debug("node.parentNode.name: " + node.parentNode.name);
+		  console.debug("node.name: " + node.name);
+		  console.debug("node: " + node);
+		  console.debug(node);
+		  //console.debug("nodeName: " + nodeName);
+			  
+	//	  console.debug("look for child elements (count=" + node.childNodes.length + ")");
+		  
+//		  for (let i = 0; i < node.childNodes.length; i++) {
+//console.debug(node.childNodes[i].nodeType);
+//console.debug(node.childNodes[i]);
+
+			  //replaceLink(node.childNodes[i]);
+//		    }
+		  
+	  }
+
+	// Only interested in attributes
+	//  if (node.nodeType === Node.ATTRIBUTE_NODE) {
+	//	  console.debug("## examine this attribue ( href or src ? )");
+//		  console.debug("node: " + node);
+	//	  console.debug(node);
+	//  }
+	
 	
   if (node.nodeType === Node.TEXT_NODE) {
     // This node only contains text.
@@ -506,7 +657,7 @@ function replaceLink (node) {
     // Skip textarea nodes due to the potential for accidental submission
     // of substituted emoji where none was intended.
     if (node.parentNode &&
-        node.parentNode.nodeName === 'TEXTAREA') {
+        node.parentNode.name === 'TEXTAREA') {
       return;
     }
 
@@ -533,21 +684,41 @@ function replaceLink (node) {
   else {
     // This node contains more than just text, call replaceText() on each
     // of its children.
-    for (let i = 0; i < node.childNodes.length; i++) {
-      replaceLink(node.childNodes[i]);
-    }    
+   // for (let i = 0; i < node.childNodes.length; i++) {
+    //  replaceLink(node.childNodes[i]);
+  //  }    
   }
+//	}catch(e){
+//		console.debug(e);
+//	}
 }
 
 // Start the recursion from the body tag.
 replaceLink(document.body);
+console.debug("###################");
+replaceLink(document.body);
 
 
-//Now monitor the DOM for additions and substitute emoji into new nodes.
+//try{
+	
+//var x = document.querySelectorAll("a");
+
+ //var i;
+ //for (i = 0; i < x.length; i++) {
+
+//		console.debug("## node: " + x[i] );
+ //} 
+
+//}catch(e){
+//	console.debug(e);
+//}
+
+//Now monitor the DOM for additions 
 //@see https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver.
 const observer = new MutationObserver((mutations) => {
 mutations.forEach((mutation) => {
  if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+	 console.debug("mutation observer");
    // This DOM change was new nodes being added. Run our substitution
    // algorithm on each newly added node.
    for (let i = 0; i < mutation.addedNodes.length; i++) {

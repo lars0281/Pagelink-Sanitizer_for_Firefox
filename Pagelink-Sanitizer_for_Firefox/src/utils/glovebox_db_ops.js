@@ -1,33 +1,49 @@
-export { loadFromIndexedDB_async,
-    saveToIndexedDB_async,
-    deleteFromIndexedDB_async, dump_db,flush_all_keys, READ_DB_async, create_indexeddb_async};
+export { 
+	create_indexeddb_async,
+    deleteFromIndexedDB_async, 
+    dump_db,flush_all_keys_async, 
+	loadFromIndexedDB_async,
+    READ_DB_async, 
+    saveToIndexedDB_async
+
+};
 
 
-    function create_indexeddb_async(dbconfig){
-    	
-    	
-    	console.debug ("database name: "+ JSON.stringify( dbconfig ));
-    	console.debug ("database name: "+ dbconfig.dbname );
-    	console.debug ("objectstore name: "+ dbconfig.objectstore[0].name );
-    	console.debug ("key: "+ dbconfig.objectstore[0].keyPath );
-    	console.debug ("index: "+ JSON.stringify(dbconfig.objectstore[0].index[0].unique) );
+function create_indexeddb_async(indexedDB, dbconfig) {
 
-    	  let db;
-    	
+    console.debug("database config: " + JSON.stringify(dbconfig));
+
+    // To do: add logic so as not to try to create tables already present
+
+
+    return new Promise(
+        function (resolve, reject) {
+
+        console.debug("database config: " + JSON.stringify(dbconfig));
+        console.debug ("database name: "+ dbconfig.dbname );
+        console.debug ("objectstore name: "+ dbconfig.objectstore[0].name );
+        console.debug ("key: "+ dbconfig.objectstore[0].keyPath );
+        console.debug ("index: "+ JSON.stringify(dbconfig.objectstore[0].index[0].unique) );
+
+        let db;
+
         // ########
         var request7 = indexedDB.open(dbconfig.dbname, 1);
         request7.onupgradeneeded = function (event) {
             db = event.target.result;
             db.onerror = function (event) {};
             // Create an objectStore in this database to keep offers to passout decryption keys in a secure way.
-            console.debug("create objectstore "+dbconfig.objectstore[0].name+" in acceptedKeyOffersDB for secure key offers");
+            console.debug("create objectstore " + dbconfig.objectstore[0].name + " in " + dbconfig.dbname + " for secure key offers");
             var objectStore = db.createObjectStore(dbconfig.objectstore[0].name, {
                     keyPath: dbconfig.objectstore[0].keyPath
                 });
 
+            console.debug("db create objectstore index " + dbconfig.objectstore[0].index[0].n);
+
             objectStore.createIndex(dbconfig.objectstore[0].index[0].n, dbconfig.objectstore[0].index[0].o, {
                 unique: dbconfig.objectstore[0].index[0].unique
             });
+            resolve(true);
         };
         request7.onerror = function (event) {
             console.debug("dp open request error 201");
@@ -36,13 +52,19 @@ export { loadFromIndexedDB_async,
             db = event.target.result;
             db.onerror = function (event) {
                 console.debug("db open request error 2");
+
+                console.debug("db create objectstore");
+
                 var objectStore = db.createObjectStore(dbconfig.objectstore[0].name, {
                         keyPath: dbconfig.objectstore[0].keyPath
                     });
 
+                console.debug("db create objectstore index " + dbconfig.objectstore[0].index[0].n);
+
                 objectStore.createIndex(dbconfig.objectstore[0].index[0].n, dbconfig.objectstore[0].index[0].o, {
                     unique: dbconfig.objectstore[0].index[0].unique
                 });
+                resolve(true);
             };
             db.onsuccess = function (event) {
                 console.debug("db open request success 2");
@@ -50,16 +72,21 @@ export { loadFromIndexedDB_async,
                         keyPath: dbconfig.objectstore[0].keyPath
                     });
 
+                console.debug("db create objectstore index " + dbconfig.objectstore[0].index[0].n);
+
                 objectStore.createIndex(dbconfig.objectstore[0].index[0].n, dbconfig.objectstore[0].index[0].o, {
                     unique: dbconfig.objectstore[0].index[0].unique
                 });
+                resolve(true);
             };
         };
-    }
+       
+    });
 
+}
   
 //remove all data from local databases
-async function flush_all_keys(dbName, storeName) {
+function flush_all_keys_async(dbName, storeName) {
   console.debug("### flush_all_keys(dnName,storeName) begin");
 
   // connect to database
