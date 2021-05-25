@@ -1,7 +1,7 @@
 /*
  * This script runs in pages
  *
- * Fist thing it does is to check if the page URL is governed by a policy. This will mostly not be the case and it is essential that the script runs as little as possible.
+ * Fist thing it does is to check if the page URL is governed by a policy. This will mostly not be the case and it is essential that this script runs as little as possible.
  *
  *
  * It presents a dialog window to the user with an explanation of the URL.
@@ -519,8 +519,8 @@ function replaceLink (node) {
 	
 	try{
 		console.debug(node);
-		// First: the href attribute and the elements that can contains one
-var x = node.querySelectorAll('link[href^="http"],a[href^="http"],area[href^="http"],base[href^="http"]');
+		// First: the href attribute and the elements that can contains one, excepting the typically clickacble links using the "a" element
+var x = node.querySelectorAll('link[href^="http"],area[href^="http"],base[href^="http"]');
 
 console.debug(node);
 console.debug("result count: " + x.length );
@@ -537,18 +537,40 @@ console.debug("result count: " + x.length );
 			x[i].setAttribute("href"," _hhh" +l);
 			
 	 } 
+	 
+	 // treat clickable links separately. For these link also attach an event listener
+
+	 var y = node.querySelectorAll('a[href^="http"]');
+
+	 	 var j;
+	 	 for (j = 0; j < y.length; j++) {
+
+	 			
+	 			var url = y[j].getAttribute("href");
+
+	 			// Attach javascript to the link that would allow the user to access the links manually. 
+	 			 y[j].setAttribute("test", "url");
+	 			// Rewrite the search hit so that it will not be a search hit again - and disable the URLs at the same time
+	 			// Disable the link by inserting a space
+	 			 y[j].setAttribute("href","DISABLED" +url);
+	 			
+	 	 } 
+
+	 
+	 
 		// Secondly: the src attribute and the elements that can contains one
-	 x = node.querySelectorAll('script[src^="http"],img[src^="http"],iframe[src^="http"],embed[src^="http"],audio[src^="http"],input[src^="http"],source[src^="http"],track[src^="http"],video[src^="http"]');
-	 for (i = 0; i < x.length; i++) {
+	 var z = node.querySelectorAll('script[src^="http"],img[src^="http"],iframe[src^="http"],embed[src^="http"],audio[src^="http"],input[src^="http"],source[src^="http"],track[src^="http"],video[src^="http"]');
+	 var k=0;
+	 for (k = 0; k < z.length; k++) {
 
 			
-			var src = x[i].getAttribute("src");
+			var src = z[k].getAttribute("src");
 
 			// Attach javascript to the link that would allow the user to access the links manually. 
-			x[i].setAttribute("test", src);
+			z[k].setAttribute("test", src);
 			// Rewrite the search hit so that it will not be a search hit again - and disable the URLs at the same time
 			// Disable the link by inserting a space
-			x[i].setAttribute("src"," _hhh" +src);
+			z[k].setAttribute("src","DISABLED" +src);
 			
 	 } 
 	 

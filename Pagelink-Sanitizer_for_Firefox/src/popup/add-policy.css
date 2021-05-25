@@ -9,7 +9,6 @@ http://www.imaputz.com/cssStuff/bigFourVersion.html   */
 /*
 The steps are listed in a tables with 6 columns 
 
-In order they are: (pix width in parentesis)
 
 step number (20)
 procedure ()
@@ -177,7 +176,7 @@ table.parameters_table {
 /* parameter value - non editable
 */
 
-tr.parameter td.value {
+td.editable_user_typed_value {
 	background: #EEE;
 	border: 1px solid #963;
 	width: 100px
@@ -186,29 +185,12 @@ tr.parameter td.value {
 /* parameter value - editable
 */
 
-tr.parameter td.value_editable {
+td.editable_user_typed_value_editing {
 	background: #FFF;
 	border: 1px solid #963;
 	width: 100px
 }
 
-/* parameter notes - non editable
-*/
-
-tr.parameter td.notes {
-	background: #EEE;
-	border: 1px solid #963;
-	width: 100px
-}
-
-/* parameter notes - editable
-*/
-
-tr.parameter td.notes_editable {
-	background: #FFF;
-	border: 1px solid #963;
-	width: 100px
-}
 
 
 

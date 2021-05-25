@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<link rel="stylesheet" href="edit-policy.css">
+
+<title>edit policy</title>
+</head>
+<body>
+<br>
+
+
+
+<table class="single_rule_table">
+
+<!-- The table contains both editable and non-editable parameter values. Use different class names to make this distinction.
+(The parameters names are always non-editable). The user modifiable values are either typed by the user or selected from a drop-down list.
+
+The class option for parameter values are the following.
+
+editable_user_typed_value
+editable_user_selected_value
+noneditable_user_typed_value
+noneditable_user_selected_value
+
+ --> 
+
+
+<tr class="table" id="url_match_table"><td>match url</td><td class="editable_user_typed_value" j_name="url_match"></td></tr>
+<tr class="table" id="scope_table"><td>scope</td><td class="editable_user_typed_value" j_name="scope">Fully qualified Domainname</td></tr>
+<tr class="table" id="createtime_table"><td>createtime</td><td class="value" j_name="createtime"></td></tr>
+<tr class="table" id="lastmodifiedtime_table"><td>lastmodifiedtime</td><td class="editable_user_typed_value" j_name="lastmodifiedtime"></td></tr>
+<tr class="table" id="notes_table"><td>notes</td><td class="editable_user_typed_value" j_name="notes"></td></tr>
+
+</table>
+
+<button class="rulelevel_button" id="edit_policy_button">Edit Policy</button>
+<p/>
+
+
+<button class="rulelevel_button" id="save_changes_button">Save changes</button>
+
+ 
+<script src="/popup/edit-policy.js"></script>
+</body>
+</html>

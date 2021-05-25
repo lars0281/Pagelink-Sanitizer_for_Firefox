@@ -10,20 +10,16 @@
 	</head>
 	<body>
 	<h2>introduction</h2>
-There has been a trend lately of obscuring the URL in web links. Where before the full URLs in all their gory details were available for inspection by the user before actually clicking on them. The URLs have been obscured behind link shorteners such as bit.ly and sneaky youtu.be   
+Hacking someone by sending them an email which when opened secretly downloads malware to their computer, should not be possible.
 
-This is not just an annoyance for those who like to look before they jump, but also a serious security liability. 
-</br>
-Most users would not click on a link that read 
-</br>
-http://ww.hacker.com/download_malware.exe
-</br>
-But a link like 
-</br>
-https://bit.lt/eHfa0qeWrk
-</br>
-looks perfectly harmless. 
-</br>
+Web-based email software typically has the option of disabling html-redering. Which when enable would prevent someone placing a prcatically image-link in an email which would download the malware. 
+
+Most people do not take advantage of this feature. And even if they did if would not prevent the same thing happening in a chat window. 
+
+
+
+
+
 The web browser add-on Link Looker is designed to unravel what is behind those link shorteners in a safe way and give the user the option 
 to proceed directly to the true endpoint. 
 The second main functionality inside Link Looker is a toolset to compute the desired URL from the URL presented on the web page. 
@@ -47,10 +43,9 @@ You can click on this link directly. Some user may prefer to take he opoertinity
 <h3>What happens</h3>
 
 
-	<h3>your options</h3>
-The rules according to which URLs are rewritten are all contained on this page. They can be amended, edited or deleted to suite your requirements. Additional explanation on who to do this are available.
 
-	<h2>link re-writing rules</h2>
+
+	<h2>page identification rules</h2>
 A principal part of the functionality in Link Looker is the ability to rewrite URL to both compute the true URL without having to call out to the URL and receive back a HTTP redirect. 
 But as important to remove unnecessary tracking and advertising information from URL. As browser cookies are becoming less reliable, more site are resorting to embedding the tracking information directly into the URLs. 
 The rewriting rules here will remove that tracking information without compromising user experience. 
@@ -58,51 +53,36 @@ The rewriting rules here will remove that tracking information without compromis
 <p/>
 Rules are grouped according to source, on what page the links are found, and destination, where the links point to. But in all cases the rewriting applies to the where the link points to, not where it is from. 
 
-					<h3>Source Fulldomain Rule</h3>
-
-	<ul class="privatekeys"></ul>
-			<!-- 		<ul class="sourcefulldomainrule"></ul> -->
-
+			
 		
 			  	<button class="ll_button" id="button_generate_default">generate default rules</button>
 			
 
-
-
-
-
-					<h3>destinationUrlRule</h3>
+					<h3>Domain Policy</h3>
+					Policy applies to all pages within a whole domain such as "google.com"
 					
-<div id="destinationUrlRule"></div>
-<button class="ll_button_boolean" id="hide_destinationUrlRule_button" bool="1" target_id="destinationUrlRule">hide table</button>
-<button class="ll_button_boolean" id="add_destinationUrlRule_button" bool="1" target_id="destinationUrlRule">add rule</button>
+<div id="sourceDomainPolicy" indexeddbname="sourceDomainPolicyDB" objectstorename="sourceDomainPolicyStore">
+<button class="ll_button_boolean" id="hide_sourceDomainPolicy_button" bool="0" target_id="sourceDomainPolicy">hide table</button>
 
-	
-					<h3>destinationFulldomainRule</h3>
-<div id="destinationFulldomainRule"></div>
-<button class="ll_button_boolean" id="hide_destinationFulldomainRule_button" bool="1" target_id="destinationFulldomainRule">hide table</button>
-<button class="ll_button_boolean" id="add_destinationFulldomainRule_button" bool="1" target_id="destinationFulldomainRule">add rule</button>
+<button class="ll_button_boolean" id="add_sourceDomainPolicy_button" bool="1" target_id="sourceDomainPolicy">add domain rule</button>
+</div>
+<h3>Hostname Policy</h3>
+					Policy applies to all pages with a given hosname "https://mail.google.com"
 
-					<h3>destinationDomainRule</h3>
-<div id="destinationDomainRule"></div>
-<button class="ll_button_boolean" id="hide_destinationDomainRule_button" bool="1" target_id="destinationDomainRule">hide table</button>
-<button class="ll_button_boolean" id="add_destinationDomainRule_button" bool="1" target_id="destinationDomainRule">add rule</button>
+<div id="sourceHostnamePolicy" indexeddbname="sourceHostnamePolicyDB" objectstorename="sourceHostnamePolicyStore">
+<button class="ll_button_boolean" id="hide_sourceHostnamePolicy_button" bool="1" target_id="sourceHostnamePolicy">hide table</button>
+<button class="ll_button_boolean" id="add_sourceHostnamePolicy_button" bool="1" target_id="sourceHostnamePolicy">add rule for hostname</button>
+</div>
 
-					<h3>sourceUrlRule</h3>
-					
-<div id="sourceUrlRule"></div>
-<button class="ll_button_boolean" id="hide_sourceUrlRule_button" bool="1" target_id="sourceUrlRule">hide table</button>
+					<h3>URL/Page Policy</h3>
+					Policy applies to particular URLs, such as "https://www.google.fi/maps"
+<div id="sourceUrlPolicy" indexeddbname="sourceUrlPolicyDB" objectstorename="sourceUrlPolicyStore">
+<button class="ll_button_boolean" id="hide_sourceUrlPolicy_button" bool="1" target_id="sourceUrlPolicy">hide table</button>
+<button class="ll_button_boolean" id="add_sourceUrlPolicy_button" bool="1" target_id="sourceUrlPolicy">add URL rule</button>
+</div>
 
-					<h3>sourceFulldomainRule</h3>
-<div id="sourceFulldomainRule"></div>
-<button class="ll_button_boolean" id="hide_sourceFulldomainRule_button" bool="1" target_id="sourceFulldomainRule">hide table</button>
 
-					<h3>sourceDomainRule</h3>
-					
-<div id="sourceDomainRule"></div>
-<button class="ll_button_boolean" id="hide_sourceDomainRule_button" bool="0" target_id="sourceDomainRule">hide table</button>
 
- 
 					<h3>backup</h3>
 Make a backup of all rewriting rules.
 <button class="ll_button" id="backup-all-rules_button">backup rules</button>
