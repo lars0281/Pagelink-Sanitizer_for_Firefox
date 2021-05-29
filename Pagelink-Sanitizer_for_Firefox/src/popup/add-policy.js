@@ -68,9 +68,9 @@ function savePolicy(event) {
     	db = 'sourceDomainPolicyDB'; 
     	store = 'sourceDomainPolicyStore';
 
-    } else if (scope == "Url") {
-    	db = 'sourceUrlPolicyDB'; 
-    	store = 'sourceUrlPolicyStore';
+    } else if (scope == "URL") {
+    	db = 'sourceURLPolicyDB'; 
+    	store = 'sourceURLPolicyStore';
     }
 
     

@@ -13,32 +13,66 @@
 
 <table class="single_rule_table">
 
-<!-- The table contains both editable and non-editable parameter values. Use different class names to make this distinction.
-(The parameters names are always non-editable). The user modifiable values are either typed by the user or selected from a drop-down list.
+<!-- The table contains both updatable and non-updatable parameter values. Use different class names to make this distinction.
+(The parameters names are always non-updatable). The user modifiable values are either typed by the user or selected from a drop-down list.
 
 The class option for parameter values are the following.
 
-editable_user_typed_value
-editable_user_selected_value
-noneditable_user_typed_value
-noneditable_user_selected_value
+updatable_user_typed_value
+updatable_user_selected_value
+nonupdatable_user_typed_value
+nonupdatable_user_selected_value
 
  --> 
 
 
-<tr class="table" id="url_match_table"><td>match url</td><td class="editable_user_typed_value" j_name="url_match"></td></tr>
-<tr class="table" id="scope_table"><td>scope</td><td class="editable_user_typed_value" j_name="scope">Fully qualified Domainname</td></tr>
+<tr class="table" id="url_match_table"><td>match url</td><td class="updatable_user_typed_value" j_name="url_match"></td></tr>
+<tr class="table" id="scope_table"><td>scope</td><td class="nonupdatable_user_selected_value" j_name="scope">Hostname</td></tr>
 <tr class="table" id="createtime_table"><td>createtime</td><td class="value" j_name="createtime"></td></tr>
-<tr class="table" id="lastmodifiedtime_table"><td>lastmodifiedtime</td><td class="editable_user_typed_value" j_name="lastmodifiedtime"></td></tr>
-<tr class="table" id="notes_table"><td>notes</td><td class="editable_user_typed_value" j_name="notes"></td></tr>
+<tr class="table" id="lastmodifiedtime_table"><td>lastmodifiedtime</td><td class="value" j_name="lastmodifiedtime"></td></tr>
+<tr class="table" id="notes_table"><td>notes</td><td class="updatable_user_typed_value" j_name="notes"></td></tr>
 
 </table>
 
-<button class="rulelevel_button" id="edit_policy_button">Edit Policy</button>
 <p/>
+Processing steps
+<p/>
+<table class="steps_table" j_name="steps">
+<tbody>
+<tr class="headers" ><th>step number</th><th >procedure</th><th >parameter and notes</th><th >step notes</th><th >actions</th></tr>
 
+<tr class="step_row">
+<!-- field containing the rank this step has in the overall processing in the policy-->
+<td class="rank">1</td>
+<!-- field containing the procedure to be carried out in this step -->
+<td class="updatable_user_selected_value" j_name="procedure">regexp</td>
 
-<button class="rulelevel_button" id="save_changes_button">Save changes</button>
+<!-- field containing notes for this processing step -->
+<td class="parameters">
+<table class="parameters_table" j_name="parameters">
+<tr class="parameter"><td class="updatable_user_typed_value" j_name="value">N/A</td><td class="updatable_user_typed_value" j_name="notes">N/A</td></tr>
+</table>
+</td>
+<!-- field containing notes for this processing step -->
+<td class="updatable_user_typed_value" j_name="notes">test</td>
+<!-- field containing buttons to manipulate this processing step -->
+<td class="buttons">
+<button class="editstep_button" id="button_generate_default">edit</button>
+<button class="upstep_button" id="button_generate_default">up</button>
+<button class="deletestep_button" id="button_generate_default">delete</button>
+<button class="downstep_button" id="button_generate_default">down</button>
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<!-- 
+<button class="objectlevel_button" id="button_addstep">add step</button>
+<button class="objectlevel_button" id="save_changes_button">Save changes</button>
+ -->
+ 
+<button class="objectlevel_button" id="edit_policy_button">Edit Policy</button>
 
  
 <script src="/popup/edit-policy.js"></script>

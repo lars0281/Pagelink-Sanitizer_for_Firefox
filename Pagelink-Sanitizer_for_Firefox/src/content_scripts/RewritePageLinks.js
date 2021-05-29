@@ -16,6 +16,9 @@
  * https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/menus/getTargetElement
  */
 
+
+
+
 function xstooltip_findPosX(obj) {
 	var curleft = 0;
 	if (obj.offsetParent) {
@@ -67,12 +70,12 @@ function glovebox_archived_original_href(node) {
 
 }
 
-function setup_dialog_window(node, new_url, linkUrl) {
+function setup_dialog_window(node, new_url, linkURL) {
 
 	console.log("setup_dialog_window");
 	// console.log(node);
 	// console.log(new_url);
-	// console.log(linkUrl);
+	// console.log(linkURL);
 
 	// based on length of url to display, set size of window
 
@@ -298,11 +301,11 @@ function setup_dialog_window(node, new_url, linkUrl) {
 
 		// depending on the rule settings...rewrite the link automatically.
 
-		// if (new_url.length > 9 && linkUrl != new_url) {
-		// console.log("replacing: " + linkUrl + " with " + new_url);
+		// if (new_url.length > 9 && linkURL != new_url) {
+		// console.log("replacing: " + linkURL + " with " + new_url);
 		// node.setAttribute('href', new_url);
 		// // archive the original URL as an inserted attrbute
-		// node.setAttribute('glovebox_archived_original_href', linkUrl);
+		// node.setAttribute('glovebox_archived_original_href', linkURL);
 		// } else {
 		// console.log("invalid returns");
 		// }
@@ -329,59 +332,6 @@ function setup_dialog_window(node, new_url, linkUrl) {
 
 }
 
-function make_bypass_redirect_rule(event) {
-
-	console.log(event);
-	// create a rule whereby this action can be taken automatically from now on
-
-	// formulate the rule
-
-	// the links obsure the true endpoint. Unlike some links on platforms like
-	// facebook,
-	// there is no information in the link itself (such as in the query string)
-	// whereby the true endpoint can be determined.
-
-	// ( In instances where the true endpoint can be determined from the URL,
-	// the URL should not be called at all. )
-	// But in the case at hand here, the URL must be called in some limited way
-	// so that the redirect information (either HTTP 302 or HTTP-META) can be
-	// received.
-	// The limited call should to the extent possible be clear of any tracking
-	// information.
-	// Source IP is unavoidable. But cookies should be excludable such that the
-	// redirecting endpoint will have difficulty correlating the traffic.
-
-	// The rule will match link URLs on patterns
-	// The assumtion being that these will link shorteners of the bit.ly type
-	// that looks like https://<domain>/<code> where the code uniquely
-	// identifies the true endpoint.
-	// The rule will be a regexp pattern that identifies such a link.
-	// the domain will be fully qualified and at rule lookup time, the domain is
-	// used as a key to look up the rule.
-
-	// Multiple rules are possible on the same domain. They must be mutually
-	// exclusive.
-
-	// Step 1. The content script read the rule set from the background.js at
-	// starup time.
-
-	// Step 2. link comes in, looking like "http://bit.ly/abcedfgh"
-	// Step 3. exact protocol, domain and port (if any) "http://bit.ly/"
-	// Step 4. Check for rule governing "http://bit.ly/"
-	// Step 5. Find one rule - looking like "http://bit.ly\/[^\/*]$"
-	// Step 6. Match rule against link URL
-	// Step 7. OK, link "http://bit.ly/abcedfgh" matches against rule
-	// "http://bit.ly\/[^\/*]$"
-	// Step 8. If "OK" in step #7 then make clean call to the URL to find out
-	// what it redirets to. Return to Step #2
-
-	//
-
-	// the
-
-	// send rule to plugin (background.js) for storage in the database
-
-}
 
 function close_tooltip(event) {
 
@@ -413,15 +363,15 @@ function close_tooltip(event) {
 		}
 	} catch (e) {
 	}
-
 }
+
 
 // this global variable indicated whether or not any rule pertain to the URL
 var ruleHit = false;
 // this global variable indicated whether or not any
 var ruleWrite = false;
 
-function RevealUrl(request, sender, sendResponse) {
+function RevealURL(request, sender, sendResponse) {
 
 	var replacementStr = request.Paste_GloveboxAcceptedSecureKeyOfferToken_text;
 	console.log("JSON(request): " + JSON.stringify(request));
@@ -432,8 +382,8 @@ function RevealUrl(request, sender, sendResponse) {
 		targetElementId = request.targetElementId;
 
 		ruleHit = false;
-		var linkUrl = "";
-		linkUrl = request.linkUrl;
+		var linkURL = "";
+		linkURL = request.linkURL;
 		var linkText = "";
 		linkText = request.linkText;
 
@@ -456,11 +406,11 @@ function RevealUrl(request, sender, sendResponse) {
 		// searching for one that has the same link and text.
 		// search for both server-relative and fully qualified links
 
-		console.log(linkUrl);
+		console.log(linkURL);
 		console.log("#### " + true_destination_url);
 
 		// create window for user to see, and click in
-		setup_dialog_window(node, true_destination_url, linkUrl);
+		setup_dialog_window(node, true_destination_url, linkURL);
 
 		// handleError(url);
 
@@ -476,7 +426,10 @@ function RevealUrl(request, sender, sendResponse) {
 }
 // }
 
-// browser.runtime.onMessage.addListener(RevealUrl);
+
+
+
+// browser.runtime.onMessage.addListener(RevealURL);
 
 // setup onClick listener to remove tooltip window for any click.
 
@@ -552,7 +505,7 @@ console.debug("result count: " + x.length );
 	 			 y[j].setAttribute("test", "url");
 	 			// Rewrite the search hit so that it will not be a search hit again - and disable the URLs at the same time
 	 			// Disable the link by inserting a space
-	 			 y[j].setAttribute("href","DISABLED" +url);
+	 	//		 y[j].setAttribute("href","DISABLED" +url);
 	 			
 	 	 } 
 
@@ -570,7 +523,7 @@ console.debug("result count: " + x.length );
 			z[k].setAttribute("test", src);
 			// Rewrite the search hit so that it will not be a search hit again - and disable the URLs at the same time
 			// Disable the link by inserting a space
-			z[k].setAttribute("src","DISABLED" +src);
+		//	z[k].setAttribute("src","DISABLED" +src);
 			
 	 } 
 	 

@@ -9,85 +9,92 @@
 		<link rel="stylesheet" href="rule-admin.css"/>
 	</head>
 	<body>
-	<h2>introduction</h2>
+	<h1>introduction</h1>
 Hacking someone by sending them an email which when opened secretly downloads malware to their computer, should not be possible.
 
-Web-based email software typically has the option of disabling html-redering. Which when enable would prevent someone placing a prcatically image-link in an email which would download the malware. 
+Web-based email software typically has the option of disabling html-rendering. Which if switched-on, would prevent someone placing a practically invisible image-link in an email, the opening of which would automatically download the malware.
+<br/>
+Most user do not take advantage of this feature. And even if they did, it would not prevent the same thing happening in a browser chat window. The problem is not in the transmission, it is the unrestricted presentation.
+<br/>
 
-Most people do not take advantage of this feature. And even if they did if would not prevent the same thing happening in a chat window. 
-
-
-
-
-
-The web browser add-on Link Looker is designed to unravel what is behind those link shorteners in a safe way and give the user the option 
-to proceed directly to the true endpoint. 
-The second main functionality inside Link Looker is a toolset to compute the desired URL from the URL presented on the web page. 
 
 <p/>
-The need for this functionality was presented by a major social media platform. It deceptively presents the user, in the browser status bar, 
-with another URL than the one accessed when the link is clicked on. Standard browser functionality is that when the user lets the cursor hover over a link,
- the actual URL contained in the link is shown in the browser status bar (bottom of browser page). 
- But in this case the social media platform displays the url where the user will eventually end up, after having been first sent back to the social media platform itself. That the link the user actually accesses when clicking, is hidden from the user. 
-However, in this case the hidden URL also contains the final URL. The Link Looker add-on contains rules to re-write these URLs and present the user with the option to go directly to the correct page without having to stop by the social media platform and without having to encounter even more tracking cookies. 
 
 
 
 	<h2>how it works</h2>
-
+This add-on operates through disabling all links to the outside from pages matching the policy rules. Link to the outside are link that start with a http(s) and where the domain name in the link is to another domain than the page. 
+<br/>An example
+<br/>A email contains a link to https://www.google.com/some/thing
+<br/>The email is read in the gmail web-based email reader with address "https://mail.google.com/mail/u/0/#inbox"
+<br/>Among the default policies that comes with the plugin, is a policy to control pages on the hostname https://mail.google.com/. Here this policy means that all links going to outside the google.com domain will be disabled.
+Using web-based Gmail to read the email above would render the link inert and the message safe. 
+ 
+<p/>
 	<h3>what do you do</h3>
+Not much. The links to outside local domain on the target pages are no longer operative. You can allways copy them manually into the navigation bar, deleting the "disabled" part and use them.  
+<p/>
+Or use the Link Looker add-on to make the disabled link accessible. Just right-click on the link and select "reveal the true endpoint of this link"
 
 Simply place the cursor over the link in question right click on the mouse. In the context menu selection "reveal true endpoint of this link"
 <br/>A small message box will appear where your cursor is. It will contain the endpoint of this URL. If there are any re-writing rules that pertain to this URL, they will have been applied. 
-You can click on this link directly. Some user may prefer to take he opoertinity open this link in a private browser window (righ-click in the link and select this option from context menu). The message box will close automatically after 30 seconds. 
+You can click on this link directly. Some user may prefer to take he opportunity open this link in a private browser window (righ-click in the link and select this option from context menu). The message box will close automatically after 30 seconds. 
+<p/>
 <h3>What happens</h3>
+Any links found inside the page that that with http or https and contain another domain name than the local one, gets "disabled" added to the beginning of them. Where before they started with "http.." they will now start with "disabledhttp..". The browser can not make sense of this and the links will not be called. 
+This is not restricted to only the typical "clickable links" (The "a href" in html) but includes all all elements that can contain external links. </br> The "HREF" attribute on
+ elements A, AREA, LINK and BASE. And the SRC attribute on elements SCRIPT, IMG, IFRAM, EMBED, AUDIO, INPUT, SOURCE, TRACK and VIDEO. 
+ Her the SRC attribute of the SCRIPT and IMG tags are of particular importance as links contained here are called automatically by the browser; No user action required. 
 
+</p>
 
+	<h1>page identification policies</h1>
 
-
-	<h2>page identification rules</h2>
-A principal part of the functionality in Link Looker is the ability to rewrite URL to both compute the true URL without having to call out to the URL and receive back a HTTP redirect. 
-But as important to remove unnecessary tracking and advertising information from URL. As browser cookies are becoming less reliable, more site are resorting to embedding the tracking information directly into the URLs. 
-The rewriting rules here will remove that tracking information without compromising user experience. 
 
 <p/>
 Rules are grouped according to source, on what page the links are found, and destination, where the links point to. But in all cases the rewriting applies to the where the link points to, not where it is from. 
 
 			
-		
-			  	<button class="ll_button" id="button_generate_default">generate default rules</button>
 			
 
-					<h3>Domain Policy</h3>
+					<h2>Domain-based Policies</h2>
 					Policy applies to all pages within a whole domain such as "google.com"
 					
 <div id="sourceDomainPolicy" indexeddbname="sourceDomainPolicyDB" objectstorename="sourceDomainPolicyStore">
-<button class="ll_button_boolean" id="hide_sourceDomainPolicy_button" bool="0" target_id="sourceDomainPolicy">hide table</button>
+<button class="ll_button_boolean" id="hide_sourceDomainPolicy_button" bool="0" target_id="sourceDomainPolicy_table">hide table</button>
 
-<button class="ll_button_boolean" id="add_sourceDomainPolicy_button" bool="1" target_id="sourceDomainPolicy">add domain rule</button>
+<button class="ll_button_boolean" id="add_sourceDomainPolicy_button" bool="1" target_id="sourceDomainPolicy_table">add domain rule</button>
 </div>
-<h3>Hostname Policy</h3>
+<h2>Hostname Policies</h2>
 					Policy applies to all pages with a given hosname "https://mail.google.com"
 
 <div id="sourceHostnamePolicy" indexeddbname="sourceHostnamePolicyDB" objectstorename="sourceHostnamePolicyStore">
-<button class="ll_button_boolean" id="hide_sourceHostnamePolicy_button" bool="1" target_id="sourceHostnamePolicy">hide table</button>
-<button class="ll_button_boolean" id="add_sourceHostnamePolicy_button" bool="1" target_id="sourceHostnamePolicy">add rule for hostname</button>
+<button class="ll_button_boolean" id="hide_sourceHostnamePolicy_button" bool="1" target_id="sourceHostnamePolicy_table">hide table</button>
+<button class="ll_button_boolean" id="add_sourceHostnamePolicy_button" bool="1" target_id="sourceHostnamePolicy_table">add rule for hostname</button>
 </div>
 
-					<h3>URL/Page Policy</h3>
+					<h2>URL/Page Policies</h2>
 					Policy applies to particular URLs, such as "https://www.google.fi/maps"
-<div id="sourceUrlPolicy" indexeddbname="sourceUrlPolicyDB" objectstorename="sourceUrlPolicyStore">
-<button class="ll_button_boolean" id="hide_sourceUrlPolicy_button" bool="1" target_id="sourceUrlPolicy">hide table</button>
-<button class="ll_button_boolean" id="add_sourceUrlPolicy_button" bool="1" target_id="sourceUrlPolicy">add URL rule</button>
+<div id="sourceURLPolicy" indexeddbname="sourceURLPolicyDB" objectstorename="sourceURLPolicyStore">
+<button class="ll_button_boolean" id="hide_sourceURLPolicy_button" bool="1" target_id="sourceURLPolicy_table">hide table</button>
+<button class="ll_button_boolean" id="add_sourceURLPolicy_button" bool="1" target_id="sourceURLPolicy_table">add URL rule</button>
 </div>
 
+	<h2>defaults</h2>
+		
+			  	<button class="ll_button" id="button_generate_default">generate default rules</button>
 
 
-					<h3>backup</h3>
+					<h2>refresh</h2>
+Refresh the live policies
+<button class="ll_button" id="refresh_policies_button">refresh</button>
+
+
+					<h2>backup</h2>
 Make a backup of all rewriting rules.
 <button class="ll_button" id="backup-all-rules_button">backup rules</button>
 
-					<h3>import</h3>
+					<h2>import</h2>
 <button class="ll_button" id="import-rules_button">import rules</button>
 		<!-- 
 		<button onclick="document.getElementById('file-input').click();">Open</button>

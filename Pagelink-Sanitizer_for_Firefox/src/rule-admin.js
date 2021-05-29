@@ -64,7 +64,7 @@ console.debug("### rule-admin.js ");
 
 // array of all rule databases
 var parentArray = [
-    ["sourceUrlPolicyDB", "sourceDomainPolicyDB", "sourceHostnamePolicyDB"]
+    ["sourceURLPolicyDB", "sourceDomainPolicyDB", "sourceHostnamePolicyDB"]
 ];
 
 class NavigateCollectionUI {
@@ -74,129 +74,11 @@ class NavigateCollectionUI {
 
         this.containerEl = containerEl;
 
-        console.debug(document);
 
-        this.state = {
-            storedImages: [],
-        };
-
-        // create tables to present all available rules
-        var table_conf = {};
-        table_conf["conf"] = [ {
-                "id": "1",
-                "width": "100px"
-            }, {
-                "id": "1",
-                "width": "290px"
-            }, {
-                "id": "1",
-                "width": "290px"
-            }, {
-                "id": "1",
-                "width": "100px"
-            }, {
-                "id": "1",
-                "width": "100px"
-            }, {
-                "id": "1",
-                "width": "100px"
-            }
-        ];
-
-        // presentation_format: text, JSON, table, dropdown
-
-        // setup column headers for table
-        var header_conf = [];
-        header_conf = [ {
-                "id": "1",
-                "text": "domain"
-            }, {
-                "id": "2",
-                "text": "steps"
-            }, {
-                "id": "5",
-                "text": "notes"
-            }, {
-                "id": "3",
-                "text": "ed. bttn"
-            }, {
-                "id": "4",
-                "text": "del. bttn"
-            }
-        ];
-
-        // setup column configuration for table
-
-        var column_conf = [];
-        column_conf = [ {
-                "id": "1",
-                "json_path": "url_match",
-                "other_attributes":[{"j_name":"url_match"}],
-                "presentation_format": "text"
-            },  {
-                "id": "3",
-                "json_path": "notes",
-                "presentation_format": "text"
-            },{
-                "id": "4",
-                "node": {
-                            "name": "button",
-                            "text": "edit",
-                            "class": "edit-rule",
-                            "EventListener": {
-                                "type": "click",
-                                "func": "updateObject",
-                                "parameter": "click"
-                            }
-                    
-                }
-            }, {
-                "id": "5",
-                "node": {
-                    "name": "button",
-                    "text": "delete",
-                    "class": "delete-rule",
-                    "EventListener": {
-                        "type": "click",
-                        "func": "deleteObject",
-                        "parameter": "click"
-                    }
-                }
-            },
-
-        ];
-
-       
-
-        // sourceDomainPolicy
-        header_conf[0].text = "Domain name";
-        column_conf[0].json_path = "url_match";
-
-        try {
-        	setup_database_objects_table_async('sourceDomainPolicyDB', 'sourceDomainPolicyStore', 'keyId', 'sourceDomainPolicy', document.getElementById("sourceDomainPolicy"), table_conf, header_conf, column_conf);
-  
-        } catch (e) {
-            console.debug(e)
-        }
-
-        // sourceHostnamePolicy
-        header_conf[0].text = "Full hostname address";
-        column_conf[0].json_path = "url_match";
-        try {
-          	setup_database_objects_table_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', 'sourceHostnamePolicy', document.getElementById("sourceHostnamePolicy"), table_conf, header_conf, column_conf);
-              } catch (e) {
-            console.debug(e)
-        }
-
-        // sourceUrlPolicy
-        header_conf[0].text = "URL/Page address";
-        column_conf[0].json_path = "url_match";
-
-        try {
-        	setup_database_objects_table_async('sourceUrlPolicyDB', 'sourceUrlPolicyStore', 'keyId','sourceUrlPolicy', document.getElementById("sourceUrlPolicy"), table_conf, header_conf, column_conf);
-        	        } catch (e) {
-            console.debug(e);
-        }
+        
+        render_tables()
+        
+   
 
         // attach event listeners to page buttons
 
@@ -206,6 +88,9 @@ class NavigateCollectionUI {
                 console.debug("### button.generate-source-hostname-rule begin");
                 generate_default_link_rules_async().then();
                 console.debug("### button.generate-source-hostname-rule end");
+                // update the page tables
+                render_tables();
+                
             });
 
         } catch (e) {
@@ -213,7 +98,7 @@ class NavigateCollectionUI {
         }
 
         // list of main tables
-        var tables = ['sourceUrlPolicy', 'sourceHostnamePolicy', 'sourceDomainPolicy'];
+        var tables = ['sourceURLPolicy', 'sourceHostnamePolicy', 'sourceDomainPolicy'];
 
         // loop through all tables and set up what buttons are needed for each
         for (var t = 0; t < tables.length; t++) {
@@ -258,6 +143,24 @@ class NavigateCollectionUI {
 
         }
 
+        
+        // add backup button
+        try {
+            document.getElementById("refresh_policies_button").addEventListener('click', () => {
+                // document.querySelector("button.backup-all-keys").addEventListener('click',
+                // ()
+                // => {
+                console.debug("refresh policies");
+
+                refresh_policies_async().then(function (e) {
+                    console.debug("refresh complete");
+                    console.debug(e);
+                });
+            }, false);
+        } catch (e) {
+            console.debug(e)
+        }
+        
         // add backup button
         try {
             document.getElementById("backup-all-rules_button").addEventListener('click', () => {
@@ -266,7 +169,6 @@ class NavigateCollectionUI {
                 // => {
                 console.debug("backup rules ");
 
-                console.debug("backup all keys start");
                 backout_all_rules().then(function (e) {
                     console.debug("backup complete");
                     console.debug(e);
@@ -344,6 +246,134 @@ class NavigateCollectionUI {
 }
 
 
+// call to background.js ro to fresh the in-memory policy set from the databases. 
+function refresh_policies_async(){
+	
+	
+	
+	// send message to background, 
+    	browser.runtime.sendMessage({
+    		request: {"refresh":"policies"}
+    	}, function (response) {
+    		console.debug("message sent to backgroup.js with response: " + JSON.stringify(response));
+    	});
+	
+	
+}
+
+// this function creates all tables for database entries
+function render_tables(){
+    // create tables to present all available rules
+    var table_conf = {};
+    table_conf["conf"] = [ {
+            "id": "1",
+            "width": "200px"
+        }, {
+            "id": "1",
+            "width": "290px"
+        }, {
+            "id": "1",
+            "width": "100px"
+        }, {
+            "id": "1",
+            "width": "100px"
+        }
+    ];
+
+    // presentation_format: text, JSON, table, dropdown
+
+    // setup column headers for table
+    var header_conf = [];
+    header_conf = [ {
+            "id": "1",
+            "text": "domain"
+        }, {
+            "id": "5",
+            "text": "notes"
+        }, {
+            "id": "3",
+            "text": "edit"
+        }, {
+            "id": "4",
+            "text": "delete"
+        }
+    ];
+
+    // setup column configuration for table
+
+    var column_conf = [];
+    column_conf = [ {
+            "id": "1",
+            "json_path": "url_match",
+            "other_attributes":[{"j_name":"url_match"}],
+            "presentation_format": "text"
+        },  {
+            "id": "3",
+            "json_path": "notes",
+            "presentation_format": "text"
+        },{
+            "id": "4",
+            "node": {
+                        "name": "button",
+                        "text": "edit",
+                        "class": "edit-rule",
+                        "EventListener": {
+                            "type": "click",
+                            "func": "updateObject",
+                            "parameter": "click"
+                        }
+                
+            }
+        }, {
+            "id": "5",
+            "node": {
+                "name": "button",
+                "text": "delete",
+                "class": "delete-rule",
+                "EventListener": {
+                    "type": "click",
+                    "func": "deleteObject",
+                    "parameter": "click"
+                }
+            }
+        },
+
+    ];
+
+   
+
+    // sourceDomainPolicy
+    header_conf[0].text = "Domain name";
+    column_conf[0].json_path = "url_match";
+
+    try {
+    	setup_database_objects_table_async('sourceDomainPolicyDB', 'sourceDomainPolicyStore', 'keyId', 'sourceDomainPolicy_table', document.getElementById("sourceDomainPolicy"), table_conf, header_conf, column_conf);
+
+    } catch (e) {
+        console.debug(e)
+    }
+
+    // sourceHostnamePolicy
+    header_conf[0].text = "Full hostname address";
+    column_conf[0].json_path = "url_match";
+    try {
+      	setup_database_objects_table_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', 'sourceHostnamePolicy_table', document.getElementById("sourceHostnamePolicy"), table_conf, header_conf, column_conf);
+          } catch (e) {
+        console.debug(e)
+    }
+
+    // sourceURLPolicy
+    header_conf[0].text = "URL/Page address";
+    column_conf[0].json_path = "url_match";
+
+    try {
+    	setup_database_objects_table_async('sourceURLPolicyDB', 'sourceURLPolicyStore', 'keyId','sourceURLPolicy_table', document.getElementById("sourceURLPolicy"), table_conf, header_conf, column_conf);
+    	        } catch (e) {
+        console.debug(e);
+    }
+	
+}
+
 
 function addNewPolicy(event) {
     console.debug("## addNewPolicy");
@@ -355,7 +385,7 @@ function addNewPolicy(event) {
     var objectStoreName = event.target.parentNode.getAttribute('objectStoreName');
     console.debug("objectStoreName: " + objectStoreName);
     console.debug("indexedDbName: " + indexedDbName);
-    if (indexedDbName == "sourceUrlPolicyDB"){
+    if (indexedDbName == "sourceURLPolicyDB"){
     	var w = window.open('popup/add-url-policy.html', 'test01', 'width=1000,height=600,resizeable,scrollbars');
 
     }else if (indexedDbName == "sourceDomainPolicyDB"){
@@ -388,7 +418,7 @@ function updateObject(event) {
  console.debug(event);
 
 
- var uuid = event.target.parentNode.parentNode.getAttribute('object_id');
+ var object_id = event.target.parentNode.parentNode.getAttribute('object_id');
  
  var indexedDbName = event.target.parentNode.parentNode.parentNode.parentNode.getAttribute('indexedDbName');
 
@@ -400,7 +430,7 @@ function updateObject(event) {
  
  
  console.debug("objectStoreName: " + objectStoreName);
- console.debug("uuid: " + uuid);
+ console.debug("object_id: " + object_id);
 
  // var popup = window.open("<html><title>sub</title></html>");
 
@@ -413,7 +443,7 @@ function updateObject(event) {
  // or destination (where the link goes to)
 
  // Add the url to the pending urls and open a popup.
- // pendingCollectedUrls.push(info.srcUrl);
+ // pendingCollectedURLs.push(info.srcURL);
  var popup = null;
  try {
 
@@ -423,14 +453,14 @@ function updateObject(event) {
  	var obj;
  	// read object out of database
 
- 	loadFromIndexedDB_async(indexedDbName,objectStoreName,uuid).then(function (res){
+ 	loadFromIndexedDB_async(indexedDbName,objectStoreName,object_id).then(function (res){
  		obj = res;
  		console.debug(obj);
 
      
   // place the identity of the object to be edited in storage
      
- 		return  browser.storage.sync.set({ 'editThisObject': obj, 'indexedDbName': indexedDbName, 'objectStoreName': objectStoreName });
+ 		return  browser.storage.sync.set({ 'object_id': object_id , 'indexedDbName': indexedDbName, 'objectStoreName': objectStoreName });
  	}).then(function(g){
  		
      	console.debug(g);
@@ -490,8 +520,9 @@ function deleteObject(event) {
         // remove the object from the table 
         
         var tble = document.querySelector('table[indexeddbname="'+indexedDbName+'"]');
-        //console.debug(tble);
+        console.debug(tble);
         var remove_this_row = tble.querySelector('tr[object_id="'+uuid+'"]');
+        console.debug(remove_this_row);
         remove_this_row.remove();
         
       });

@@ -35,8 +35,14 @@ table.steps_table tr.headers th+th+th+th+th {
 }
 
 
+/* set row height in the steps table*/
+table.steps_table tbody tr {
+	/*line-height: 200px;*/
+	overflow-y: visible !important;
+}
 
-
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}
 
 /* begin some basic styling here                     */
 body {
@@ -121,13 +127,13 @@ table.steps_table tr.headers th+th {
 }
 
 
-table.steps_table tr.step_row td.procedure_editable {
+tr.step_row td.procedure_editable {
 	background: #FFF;
 	border: 1px solid #963;
 	width: 100px
 }
 
-table.steps_table tr.step_row td.procedure {
+tr.step_row td.procedure {
 	background: #EEE;
 	border: 1px solid #963;
 	width: 100px
@@ -173,24 +179,39 @@ table.parameters_table {
 }
 
 
-/* parameter value - non editable
+/* typed parameter value - non editable
 */
 
-td.editable_user_typed_value {
+td.updatable_user_typed_value {
 	background: #EEE;
 	border: 1px solid #963;
 	width: 100px
 }
 
-/* parameter value - editable
+/* typed parameter value - editable
 */
 
-td.editable_user_typed_value_editing {
+td.updatable_user_typed_value_editing {
 	background: #FFF;
 	border: 1px solid #963;
 	width: 100px
 }
 
+/* selected parameter value - non editable
+*/
+td.updatable_user_selected_value {
+	background: #EEE;
+	border: 1px solid #963;
+	width: 100px
+}
+
+/* selected parameter value - editable
+*/
+td.updatable_user_selected_value_editing {
+	background: #FFF;
+	border: 1px solid #963;
+	width: 100px
+}
 
 
 
@@ -212,7 +233,7 @@ h2 {
 }
 
 
-button.rulelevel_button {
+button.objectlevel_button {
 	font: normal normal 10px Verdana, Geneva, Arial, Helvetica, sans-serif;
 	margin: 0 0 5px 0;
 	width: 120px;
