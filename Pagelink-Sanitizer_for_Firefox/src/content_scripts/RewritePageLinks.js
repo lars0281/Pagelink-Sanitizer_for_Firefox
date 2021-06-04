@@ -500,12 +500,14 @@ console.debug("result count: " + x.length );
 
 	 			
 	 			var url = y[j].getAttribute("href");
-
+console.debug(url);
 	 			// Attach javascript to the link that would allow the user to access the links manually. 
 	 			 y[j].setAttribute("test", "url");
 	 			// Rewrite the search hit so that it will not be a search hit again - and disable the URLs at the same time
-	 			// Disable the link by inserting a space
-	 	//		 y[j].setAttribute("href","DISABLED" +url);
+	 			 
+	 			 // apply policy
+	 			// Disable the link by prefixing the protocol with "disabled"
+	 			 y[j].setAttribute("href","disabled" +url);
 	 			
 	 	 } 
 

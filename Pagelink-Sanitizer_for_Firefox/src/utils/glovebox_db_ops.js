@@ -1,12 +1,99 @@
 export { 
+	backup_all_databases_async,
 	create_indexeddb_async,
     deleteFromIndexedDB_async, 
     dump_db,flush_all_keys_async, 
-	loadFromIndexedDB_async,
+    import_into_db_async,
+    loadFromIndexedDB_async,
     READ_DB_async, 
     saveToIndexedDB_async
 
 };
+
+
+import {
+	  arrayBufferToBase64,
+		arrayBufferToString,
+		base64ToArrayBuffer,
+		convertArrayBufferViewtoString,
+		convertStringToArrayBufferView,
+	    download_file,
+	    indexeddb_setup_async,
+	    setup_default_policies_async,
+	    SHA1,
+	    stringToArrayBuffer
+  
+}
+from "./glovebox_utils.js"
+
+
+import {
+	default_policies,
+	index_db_config
+}
+from "../glovebox_projectspecific.js"
+
+
+
+function backup_all_databases_async() {
+    console.debug("### backup_all_databases_async() begin");
+
+    return new Promise((resolve, reject) => {
+    // return new Promise((resolve, reject) => {
+
+    var listOfKeys = "{";
+
+    // create list of databases and datastores to be backed up in the form of an
+    // array of arrays with each field naming the database, datastore in the
+    // database
+
+// var parentArray = [["sourceDomainPolicyDB","sourceDomainPolicyStore"],["sourceHostnamePolicyDB","sourceHostnamePolicyStore"],["sourceURLPolicyDB","sourceURLPolicyStore"]];
+    
+    
+    
+    
+    try {
+    	  var p = [];
+        for (var i = 0; i < index_db_config.length; i++) {
+
+        	
+        	 p.push( READ_DB_async(index_db_config[i].dbname, index_db_config[i].dbname, index_db_config[i].objectstore[0].name));
+              	
+        	// p.push( READ_DB_async(parentArray[i][0], parentArray[i][0], parentArray[i][1]));
+        }
+        	
+            
+        Promise.all(p)
+        .then(function(values){
+            //console.debug(JSON.stringify(values));
+            
+
+        	
+            // proceed with encryption
+            // using passphrase specified in the form
+
+
+             // encrypt the data using the passphrase contained in the variable
+            // backupFilePwd
+
+            download_file("linklooker_rules_backup.json", JSON.stringify(values));
+
+            
+            
+            resolve(values);
+        });
+            	
+            	
+    } catch (e) {
+        console.debug(e)
+    }
+
+
+    resolve(true);
+
+    });
+    
+}
 
 
 function create_indexeddb_async(indexedDB, dbconfig) {
@@ -112,6 +199,85 @@ function flush_all_keys_async(dbName, storeName) {
 }
 
 
+
+function dump_db_2_hash_async(dbName, storeName3) {
+
+    return new Promise(
+        function (resolve, reject) {
+        // access database
+        console.debug("-------------------------------------");
+
+        console.debug("dump_db access database: " + dbName);
+        var dbRequest = indexedDB.open(dbName);
+
+        //     try {
+        dbRequest.onsuccess = function (event3) {
+            var database3 = event3.target.result;
+
+            //console.debug("access datastore: " + storeName3);
+
+            var transaction3 = database3.transaction([storeName3]);
+            var objectStore3 = transaction3.objectStore(storeName3);
+
+            var allRecords3 = objectStore3.getAll();
+            allRecords3.onsuccess = function () {
+                console.debug("-------------------------------------");
+                console.debug("-------------------------------------");
+
+                const res3 = allRecords3.result;
+                console.debug(res3);
+                console.debug("## results" + JSON.stringify(res3));
+                //listOfKeys = listOfKeys + ',"privateKeys":' + JSON.stringify(res3) + '';
+                console.debug("-------------------------------------");
+                console.debug("-------------------------------------");
+
+                // get private(and their public component) signing keys
+                database3.close();
+                resolve(res3);
+
+            };
+            database3.close();
+
+        }
+        //            dbRequest.close();
+        //      } catch (e) {
+        //         console.debug(e);
+        //         resolve("error");
+        //    }
+    });
+}
+
+
+
+function import_into_db_async(database, datastore, keypath, data) {
+
+	
+	//console.debug(database);
+	//console.debug(datastore);
+	//console.debug(keypath);
+
+	var importable_objects = JSON.parse(data);
+	
+	//console.debug(importable_objects);
+	//console.debug(importable_objects.length);
+	
+	//console.debug(JSON.stringify(importable_objects));
+
+	// loop through all entries in the data object 
+	// crate array of promises to save obejct to dataabse
+	var imports = [];
+	
+	   // fine contains an array of database dumps
+    for (var j = 0; j <importable_objects.length; j++) {
+ 
+    	 imports.push(saveToIndexedDB_async(database, datastore, keypath, importable_objects[j] ));
+
+    	 
+    }
+	
+	
+	
+}
 
 function dump_db(db, dbName3, storeName3) {
 
@@ -304,17 +470,17 @@ function saveToIndexedDB_async(dbName, storeName, keyId, object) {
             console.debug(error);
 
         }
-        console.debug("saveToIndexedDB_async: 1 dbRequest=" + dbRequest);
+   //     console.debug("saveToIndexedDB_async: 1 dbRequest=" + dbRequest);
 
         dbRequest.onerror = function (event) {
-            console.debug("saveToIndexedDB:error.open:db " + dbName);
+     //       console.debug("saveToIndexedDB:error.open:db " + dbName);
             reject(Error("IndexedDB database error"));
         };
 
-        console.debug("saveToIndexedDB: 2" + JSON.stringify(dbRequest));
+       // console.debug("saveToIndexedDB: 2" + JSON.stringify(dbRequest));
 
         dbRequest.onupgradeneeded = function (event) {
-            console.debug("saveToIndexedDB: 21");
+         //   console.debug("saveToIndexedDB: 21");
             var database = event.target.result;
             console.debug("saveToIndexedDB:db create obj store " + storeName);
             var objectStore = database.createObjectStore(storeName, {
@@ -322,32 +488,32 @@ function saveToIndexedDB_async(dbName, storeName, keyId, object) {
                 });
         };
 
-        console.debug("saveToIndexedDB: 3" + JSON.stringify(dbRequest));
+   //     console.debug("saveToIndexedDB: 3" + JSON.stringify(dbRequest));
         try {
 
             dbRequest.onsuccess = function (event) {
-                console.debug("saveToIndexedDB: 31");
+           //     console.debug("saveToIndexedDB: 31");
                 var database = event.target.result;
-                console.debug("saveToIndexedDB: 32");
+             //   console.debug("saveToIndexedDB: 32");
                 var transaction = database.transaction([storeName], 'readwrite');
-                console.debug("saveToIndexedDB: 33");
+              //  console.debug("saveToIndexedDB: 33");
                 var objectStore = transaction.objectStore(storeName);
-                console.debug("saveToIndexedDB:objectStore put: " + JSON.stringify(object));
+               // console.debug("saveToIndexedDB:objectStore put: " + JSON.stringify(object));
 
                 var objectRequest = objectStore.put(object); // Overwrite if
                 // already
                 // exists
 
-                console.debug("saveToIndexedDB:objectRequest: " + JSON.stringify(objectRequest));
+                //console.debug("saveToIndexedDB:objectRequest: " + JSON.stringify(objectRequest));
 
                 objectRequest.onerror = function (event) {
-                    console.debug("saveToIndexedDB:error: " + storeName);
+              //      console.debug("saveToIndexedDB:error: " + storeName);
 
                     reject(Error('Error text'));
                 };
 
                 objectRequest.onsuccess = function (event) {
-                    console.debug("saveToIndexedDB:success: " + storeName);
+                  //  console.debug("saveToIndexedDB:success: " + storeName);
                     resolve('Data saved OK');
                 };
             };
@@ -366,8 +532,10 @@ function READ_DB_async(db, dbName3, storeName3) {
     return new Promise((resolve, reject) => {
 
         try {
-            var one;
 
+            var one = {};
+one.database = db;
+one.datastore = storeName3;
             console.debug("reading db:" + db + " dbname:" + dbName3 + " storeName:" + storeName3);
             var dbRequest = indexedDB.open(db);
 
@@ -381,7 +549,7 @@ function READ_DB_async(db, dbName3, storeName3) {
             };
 
             dbRequest.onsuccess = function (event3) {
-                console.debug("one " + one);
+                //console.debug("one " + one);
                 console.debug("db:" + db + " dbname:" + dbName3 + " storeName:" + storeName3);
                 var database3 = event3.target.result;
                 console.debug("2");
@@ -395,7 +563,7 @@ function READ_DB_async(db, dbName3, storeName3) {
                     const res3 = allRecords3.result;
                     // get private(and their public component) signing keys
                     database3.close();
-                    one = JSON.stringify(res3);
+                    one.data = JSON.stringify(res3);
                     console.debug("returning from database: " + one);
                     resolve(one);
                 };
@@ -404,7 +572,8 @@ function READ_DB_async(db, dbName3, storeName3) {
 
         } catch (e) {
             console.debug(e);
-            reject();
+            resolve();          
+//            reject();
         }
 
     });

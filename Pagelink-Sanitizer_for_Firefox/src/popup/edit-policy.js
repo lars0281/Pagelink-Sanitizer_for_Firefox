@@ -87,26 +87,30 @@ browser.storage.sync.get(['object_id', 'indexedDbName', 'objectStoreName'], func
         // all rules must have at least one step
         var s = 0;
         last_row.querySelector("td.rank").textContent = (s + 1);
-        last_row.querySelector("td[j_name=procedure]").textContent = editThisObject.steps[s].procedure;
-        // loop through parameters - assume just one parameter for now
-        if (editThisObject.steps[s].parameters.length > 0) {
+        
+        var first_step = editThisObject.steps[0];
+        last_row.querySelector("td[j_name=procedure]").textContent = first_step.procedure;
+        // loop through parameters 
+        if (first_step.parameters.length > 0) {
             var p = 0;
-            console.debug("parameter: " + JSON.stringify(editThisObject.steps[s].parameters));
+            
+            console.debug("parameter: " + JSON.stringify(first_step.parameters));
             console.debug(new_row);
 
             var last_param_row = last_row.querySelectorAll("tr.parameter")[0];
             console.debug(last_param_row);
-            last_param_row.querySelector("td[j_name=value]").textContent = editThisObject.steps[s].parameters[p].value;
-            last_param_row.querySelector("td[j_name=notes]").textContent = editThisObject.steps[s].parameters[p].notes;
+            last_param_row.querySelector("td[j_name=value]").textContent = first_step.parameters[p].value;
+            last_param_row.querySelector("td[j_name=notes]").textContent = first_step.parameters[p].notes;
 
             // are there more parameters?
             p = 1;
-            while (p < editThisObject.steps[s].parameters.length && p < 12) {
+            while (p < first_step.parameters.length && p < 12) {
                 // add another parameter
                 // ok, need another row so clone the last row (and edit it)
                 var new_param_row = last_param_row.cloneNode(true);
-                new_param_row.querySelector("td[j_name=value]").textContent = editThisObject.steps[s].parameters[p].value;
-                new_param_row.querySelector("td[j_name=notes]").textContent = editThisObject.steps[s].parameters[p].notes;
+                new_param_row.querySelector("td[j_name=value]").textContent = first_step.parameters[p].value;
+                // parameter notes
+                new_param_row.querySelector("td[j_name=notes]").textContent = first_step.parameters[p].notes;
 
                 last_param_row.insertAdjacentElement('afterend', new_param_row);
 
@@ -115,8 +119,8 @@ browser.storage.sync.get(['object_id', 'indexedDbName', 'objectStoreName'], func
                 p++;
             }
         }
-
-        last_row.querySelector("td[j_name=notes]").textContent = editThisObject.steps[s].notes;
+        // step notes
+        last_row.querySelector("tr.step_row > td[j_name=notes]").textContent = first_step.notes;
 
         // are there additional steps ?
         s = 1;
@@ -174,8 +178,8 @@ browser.storage.sync.get(['object_id', 'indexedDbName', 'objectStoreName'], func
             } catch (f) {
                 console.error(f);
             }
-            // set the notes field for the whole row
-            new_row.querySelector("tr>td[j_name=notes]").textContent = editThisObject.steps[s].notes;
+            // set the notes field for the whole step row
+            new_row.querySelector("tr.step_row>td[j_name=notes]").textContent = editThisObject.steps[s].notes;
 
             console.debug(new_row);
             // append this new row and make the inserted row the new last row
@@ -591,7 +595,21 @@ function savePolicyChanges(event) {
 
     var new_obj = read_object_from_form();
 
-    saveUpdateToIndexedDB_async(db, store, 'keyId', new_obj);
+    saveUpdateToIndexedDB_async(db, store, 'keyId', new_obj).then(function(){
+    	
+    	
+
+    
+
+	
+	// send message to background, to request a refresh of the in-memory databases for this policy object
+    	browser.runtime.sendMessage({
+    		request: {"policy":"single_update","update_details":{"database":db,"datastore":store,"object":new_obj} }
+    	}, function (response) {
+    		console.debug("message sent to backgroup.js with response: " + JSON.stringify(response));
+    	});
+
+    });
 
     swap_save_2_edit_button();
 
@@ -743,7 +761,7 @@ function read_object_from_form() {
                 if (typeof list == 'undefined' || list == null) {
                     // ok, no selection list
                     console.debug("no dropdown");
-                    procedure = st[s].querySelector("td[j_name=procedure]").textContent;
+                    procedure = steps[s].querySelector("td[j_name=procedure]").textContent;
 
                 } else {
 
