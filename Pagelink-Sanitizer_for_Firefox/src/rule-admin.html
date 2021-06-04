@@ -61,23 +61,23 @@ Rules are grouped according to source, on what page the links are found, and des
 					Policy applies to all pages within a whole domain such as "google.com"
 					
 <div id="sourceDomainPolicy" indexeddbname="sourceDomainPolicyDB" objectstorename="sourceDomainPolicyStore">
-<button class="ll_button_boolean" id="hide_sourceDomainPolicy_button" bool="0" target_id="sourceDomainPolicy_table">hide table</button>
+<button class="ll_button_boolean" id="hide_sourceDomainPolicyDB_button" bool="0" target_id="sourceDomainPolicyDB_table">hide table</button>
 
-<button class="ll_button_boolean" id="add_sourceDomainPolicy_button" bool="1" target_id="sourceDomainPolicy_table">add domain rule</button>
+<button class="ll_button_boolean" id="add_sourceDomainPolicyDB_button" bool="1" target_id="sourceDomainPolicyDB_table">add domain rule</button>
 </div>
 <h2>Hostname Policies</h2>
 					Policy applies to all pages with a given hosname "https://mail.google.com"
 
 <div id="sourceHostnamePolicy" indexeddbname="sourceHostnamePolicyDB" objectstorename="sourceHostnamePolicyStore">
-<button class="ll_button_boolean" id="hide_sourceHostnamePolicy_button" bool="1" target_id="sourceHostnamePolicy_table">hide table</button>
-<button class="ll_button_boolean" id="add_sourceHostnamePolicy_button" bool="1" target_id="sourceHostnamePolicy_table">add rule for hostname</button>
+<button class="ll_button_boolean" id="hide_sourceHostnamePolicyDB_button" bool="1" target_id="sourceHostnamePolicyDB_table">hide table</button>
+<button class="ll_button_boolean" id="add_sourceHostnamePolicyDB_button" bool="1" target_id="sourceHostnamePolicyDB_table">add rule for hostname</button>
 </div>
 
 					<h2>URL/Page Policies</h2>
 					Policy applies to particular URLs, such as "https://www.google.fi/maps"
 <div id="sourceURLPolicy" indexeddbname="sourceURLPolicyDB" objectstorename="sourceURLPolicyStore">
-<button class="ll_button_boolean" id="hide_sourceURLPolicy_button" bool="1" target_id="sourceURLPolicy_table">hide table</button>
-<button class="ll_button_boolean" id="add_sourceURLPolicy_button" bool="1" target_id="sourceURLPolicy_table">add URL rule</button>
+<button class="ll_button_boolean" id="hide_sourceURLPolicyDB_button" bool="1" target_id="sourceURLPolicyDB_table">hide table</button>
+<button class="ll_button_boolean" id="add_sourceURLPolicyDB_button" bool="1" target_id="sourceURLPolicyDB_table">add URL rule</button>
 </div>
 
 	<h2>defaults</h2>
@@ -91,11 +91,11 @@ Refresh the live policies
 
 
 					<h2>backup</h2>
-Make a backup of all rewriting rules.
+Make a backup of all policies.
 <button class="ll_button" id="backup-all-rules_button">backup rules</button>
 
 					<h2>import</h2>
-<button class="ll_button" id="import-rules_button">import rules</button>
+<button class="ll_button" id="import-rules_button">import policies</button>
 		<!-- 
 		<button onclick="document.getElementById('file-input').click();">Open</button>
 <input id="file-input" type="file" name="name" style="display: none;" />

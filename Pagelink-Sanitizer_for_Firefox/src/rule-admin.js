@@ -1,22 +1,36 @@
-export {deleteObject,updateObject}
+export {deleteObject,
+render_tables,
+updateObject
+}
+
 import {
-    arrayBufferToBase64,
-	arrayBufferToString,
-    base64ToArrayBuffer,
+	    arrayBufferToBase64,
+		arrayBufferToString,
+		base64ToArrayBuffer,
+		convertArrayBufferViewtoString,
+		convertStringToArrayBufferView,
+	    download_file,
+	    indexeddb_setup_async,
+	    refresh_policies_async,
+	    setup_default_policies_async,
+	    SHA1,
+	    stringToArrayBuffer
+	    
+}
+from "./utils/glovebox_utils.js"
+
+
+import {
+	attach_main_button_eventlisteners,
 	CompareRowOfNumbers,
     CompareRowOfText,
-	convertArrayBufferViewtoString,
-	convertStringToArrayBufferView,
 	createTable,
     createTableRow,
-    download_file,
     GetDateSortingKey,
     reflow,
     setup_database_objects_table_async,
-    SHA1,
     sortColumn,
     SortTable,
-    stringToArrayBuffer,
     TableLastSortedColumn,
     writeTableCell,
     writeTableHeaderRow,
@@ -24,48 +38,36 @@ import {
     writeTableRow
     
 }
-from "./utils/glovebox_utils.js"
+from "./utils/glovebox_form_function.js"
 
-
-//import {
-//	generate_encryption_key_async,
-//	generate_new_RSA_sign_and_encr_keypairs, 
-//	generate_privatepublickey_for_signing_async,
-//	get_default_signing_key_async,
-//	makeDefaultEncryptionKey, 
-//	makeDefaultPrivateKey, 
-//	updateDecryptionKey, 
-//	updateEncryptionKey
-//}
-//from "./utils/glovebox_keyops.js"
 
 
 import {
+	backup_all_databases_async,
+	    
 //	create_indexeddb_async,
     deleteFromIndexedDB_async,
 //    dump_db,
 //    flush_all_keys_async,
+    import_into_db_async,
 	loadFromIndexedDB_async,
-//    READ_DB_async,
+    READ_DB_async,
 	saveToIndexedDB_async
 }
 from "./utils/glovebox_db_ops.js"
 
 
 import { 
-	indexeddb_setup_async, 
-	generate_default_link_rules_async 
+	default_policies,
+	index_db_config,
+
 	}
-from "./utils/glovebox_setup_P-S.js"
+from "./glovebox_projectspecific.js"
 
 
 
 console.debug("### rule-admin.js ");
 
-// array of all rule databases
-var parentArray = [
-    ["sourceURLPolicyDB", "sourceDomainPolicyDB", "sourceHostnamePolicyDB"]
-];
 
 class NavigateCollectionUI {
     constructor(containerEl) {
@@ -80,28 +82,20 @@ class NavigateCollectionUI {
         
    
 
-        // attach event listeners to page buttons
-
-        try {
-            document.getElementById("button_generate_default").addEventListener('click',
-                function () {
-                console.debug("### button.generate-source-hostname-rule begin");
-                generate_default_link_rules_async().then();
-                console.debug("### button.generate-source-hostname-rule end");
-                // update the page tables
-                render_tables();
-                
-            });
-
-        } catch (e) {
-            console.debug(e);
-        }
+  
 
         // list of main tables
-        var tables = ['sourceURLPolicy', 'sourceHostnamePolicy', 'sourceDomainPolicy'];
+        console.debug(JSON.stringify(index_db_config));
+        console.debug(JSON.stringify(index_db_config.length));
+        //console.debug(JSON.stringify(index_db_config.dbs[0]));
+        
+        
+        
+        
+      //  var tables = ['sourceURLPolicy', 'sourceHostnamePolicy', 'sourceDomainPolicy'];
 
         // loop through all tables and set up what buttons are needed for each
-        for (var t = 0; t < tables.length; t++) {
+        for (var t = 0; t < index_db_config.length; t++) {
             // console.debug("do: " + tables[t]);
 
 
@@ -110,7 +104,7 @@ class NavigateCollectionUI {
                 // document.getElementById("hide_"+tables[t]+"_button").style.display);
 
                 // show/hide button
-                document.getElementById("hide_" + tables[t] + "_button").addEventListener('click',
+                document.getElementById("hide_" + index_db_config[t].dbname + "_button").addEventListener('click',
                     function (event) {
                     if (event.target.getAttribute('bool') == '1') {
                         var target_id = event.target.getAttribute('target_id');
@@ -130,7 +124,7 @@ class NavigateCollectionUI {
                 });
 
                 // add button
-                document.getElementById("add_" + tables[t] + "_button").addEventListener('click',
+                document.getElementById("add_" + index_db_config[t].dbname + "_button").addEventListener('click',
                     function (event) {
   
                              console.debug("### button add begin");
@@ -138,128 +132,20 @@ class NavigateCollectionUI {
                          });
                 
             } catch (e) {
+            	// error to be expected here it not all databases should have their own table. Which are to be show is determined by the content rule-admin.html
+            	// The iteration above goes through the master list in db config, the html acts as a filter.
                 console.debug(e);
             }
 
         }
 
-        
-        // add backup button
-        try {
-            document.getElementById("refresh_policies_button").addEventListener('click', () => {
-                // document.querySelector("button.backup-all-keys").addEventListener('click',
-                // ()
-                // => {
-                console.debug("refresh policies");
-
-                refresh_policies_async().then(function (e) {
-                    console.debug("refresh complete");
-                    console.debug(e);
-                });
-            }, false);
-        } catch (e) {
-            console.debug(e)
-        }
-        
-        // add backup button
-        try {
-            document.getElementById("backup-all-rules_button").addEventListener('click', () => {
-                // document.querySelector("button.backup-all-keys").addEventListener('click',
-                // ()
-                // => {
-                console.debug("backup rules ");
-
-                backout_all_rules().then(function (e) {
-                    console.debug("backup complete");
-                    console.debug(e);
-                });
-            }, false);
-        } catch (e) {
-            console.debug(e)
-        }
-
-        // add event listener for import button
-
-        console.debug("setup import form");
-        try {
-            document.getElementById('import-rules_button').addEventListener('click', function (evt) {
-                console.debug("### reading import file");
-
-                var input = document.createElement('input');
-                input.type = 'file';
-
-                input.onchange = e => {
-
-                    // getting a hold of the file reference
-                    var file = e.target.files[0];
-
-                    // setting up the reader
-                    var reader = new FileReader();
-                    reader.readAsText(file, 'UTF-8');
-
-                    // here we tell the reader what to do when it's done
-                    // reading...
-                    reader.onload = readerEvent => {
-                        var content = readerEvent.target.result; // this is
-                        // the
-                        // content!
-                        console.debug(content);
-
-                        // add content to database
-                        // loop parentArray
-                        var p = [];
-                        try {
-                            for (var i = 0; i < parentArray.length; i++) {
-                                console.debug(parentArray[i][0]);
-
-                                console.debug("import into " + parentArray[i][0]);
-                                var imported = JSON.parse(content);
-                                console.debug("import  " + imported[parentArray[i][0]].length);
-
-                                for (var j = 0; j < imported[parentArray[i][0]].length; j++) {
-                                    console.debug("import  " + JSON.stringify(imported[parentArray[i][0]][j]));
-                                    // add rule to data
-
-                                    p.push(saveToIndexedDB_async(parentArray[i][0], parentArray[i][1], 'keyId', imported[parentArray[i][0]][j]));
-
-                                }
-
-                            }
-                        } catch (e) {
-                            console.debug(e);
-                        }
-                        console.debug(p);
-
-                    }
-
-                }
-
-                input.click();
-
-            });
-
-        } catch (e) {
-            console.debug(e);
-        }
+        attach_main_button_eventlisteners();
 
     }
 }
 
 
-// call to background.js ro to fresh the in-memory policy set from the databases. 
-function refresh_policies_async(){
-	
-	
-	
-	// send message to background, 
-    	browser.runtime.sendMessage({
-    		request: {"refresh":"policies"}
-    	}, function (response) {
-    		console.debug("message sent to backgroup.js with response: " + JSON.stringify(response));
-    	});
-	
-	
-}
+
 
 // this function creates all tables for database entries
 function render_tables(){
@@ -340,12 +226,43 @@ function render_tables(){
 
     ];
 
+    
+    // l
    
 
     // sourceDomainPolicy
     header_conf[0].text = "Domain name";
     column_conf[0].json_path = "url_match";
 
+    
+    
+    // loop through all tables and create the actual tables object
+    for (var t = 0; t < index_db_config.length; t++) {
+        // console.debug("do: " + tables[t]);
+
+
+        try {
+
+// check if the tables has a spot on the html page
+//        	   console.debug(document.getElementById("hide_" + index_db_config[t].dbname + "_button"));
+        	  console.debug( document.querySelector('div[indexeddbname="'+index_db_config[t].dbname+'"]'));
+        	
+        	  if(document.querySelector('div[indexeddbname="'+index_db_config[t].dbname+'"]')){
+        		  
+        		  
+        	  }
+        	  
+        	
+        } catch (e) {
+        	// error to be expected here it not all databases should have their own table. Which are to be show is determined by the content rule-admin.html
+        	// The iteration above goes through the master list in db config, the html acts as a filter.
+            console.debug(e);
+        }
+
+    }
+    
+    
+    
     try {
     	setup_database_objects_table_async('sourceDomainPolicyDB', 'sourceDomainPolicyStore', 'keyId', 'sourceDomainPolicy_table', document.getElementById("sourceDomainPolicy"), table_conf, header_conf, column_conf);
 
@@ -373,6 +290,7 @@ function render_tables(){
     }
 	
 }
+
 
 
 function addNewPolicy(event) {
@@ -531,82 +449,6 @@ function deleteObject(event) {
 
 
 
-function backout_all_rules() {
-    console.debug("### backup_all_keys() begin");
-
-    // return new Promise((resolve, reject) => {
-
-    var listOfKeys = "{";
-
-    // create list of databases and datastores to be backed up in the form of an
-    // array of arrays with each field naming the database, datastore in the
-    // database
-
-    //
-
-    // ["acceptedKeyOffers", "acceptedKeyOffers", "acceptedKeyOffers"]
-    // ["gloveboxKeys", "decryptionKeys", "decryptionKeys"],
-    // ["gloveboxKeys", "encryptionKeys", "encryptionKeys"]
-    // ["privateKeys", "keyPairs", "keyPairs"]
-
-
-    try {
-        for (var i = 0; i < parentArray.length; i++) {
-
-            try {
-                // await wait_promise(20); //wait for 2 seconds
-                // var one = await
-                // wait_promisedump_db(parentArray[i][0],parentArray[i][1],parentArray[i][2]);
-                // var one =
-                // dump_db(parentArray[i][0],parentArray[i][1],parentArray[i][2]);
-                // var one;
-
-                var db = parentArray[i][0];
-                var dbName3 = parentArray[i][1];
-                var storeName3 = parentArray[i][2];
-                console.debug("### accessing db:" + db + " dbname:" + dbName3 + " storeName:" + storeName3);
-
-                const one = READ_DB(db, dbName3, storeName3);
-                console.debug("READ " + one);
-
-                // console.debug("# appending: " +parentArray[i][0] + " " + one);
-                // console.debug("#-#-#-#-# " + i + " " + listOfKeys);
-
-                listOfKeys = listOfKeys + '"' + parentArray[i][0] + '":' + one + ',';
-                console.debug("#-#-#-#-# (accumulating) " + i + " " + listOfKeys);
-
-            } catch (e) {
-                console.debug("ERROR");
-
-                console.debug(e);
-            }
-
-        }
-    } catch (e) {
-        console.debug(e)
-    }
-
-    listOfKeys = listOfKeys.substring(0, listOfKeys.length - 1) + '}';
-
-    // proceed with encryption
-    // using passphrase specified in the form
-
-
-    console.debug("#-#-#-#-# listOfKeys (complete) " + listOfKeys);
-    // encrypt the data using the passphrase contained in the variable
-    // backupFilePwd
-
-    download_file("linklooker_rules_backup.json", listOfKeys);
-
-    // download_file("glovebox_keys_backup.txt", listOfKeys, "text/plain");
-    console.debug("### backup_all_keys() end");
-    // resolve( "true");
-    console.debug("backup completed, proceed to flush all keys.");
-    // await flush_all_dbs();
-
-    // });
-
-}
 
 
 
