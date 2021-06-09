@@ -2,9 +2,9 @@
 <html lang="en">
 	<head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-	<link rel="stylesheet" href="add-policy.css">
+	<link rel="stylesheet" href="edit-policy.css">
 
-<title>add policy for a host</title>
+<title>add policy</title>
 </head>
 <body>
 <br>
@@ -13,43 +13,31 @@
 
 <table class="single_rule_table" indexedDbName="indexedDbName" objectStoreName="objectStoreName">
 
-<!-- The table contains both editable and non-editable parameter values. Use different class names to make this distinction.
-(The parameters names are always non-editable). The user modifiable values are either typed by the user or selected from a drop-down list.
+<!-- The table contains both updatable and non-updatable parameter values. Use different class names to make this distinction.
+(The parameters names are always non-updatable). The user modifiable values are either typed by the user or selected from a drop-down list.
 
 The class option for parameter values are the following.
 
-editable_user_typed_value
-editable_user_selected_value
-noneditable_user_typed_value
-noneditable_user_selected_value
+updatable_user_typed_value
+updatable_user_selected_value
+nonupdatable_user_typed_value
+nonupdatable_user_selected_value
 
--->In the "match this host" field
-enter the hostname (fully qualified domain name) precceeded by the the protocol and ending in a "/" character. Include port number if one is needed. 
-<br/><br/>
-Examples:
-<br/>https://www.google.com/
-<br/>
-<br/>http://www.microsoft.com/
-<br/>
-<br/>https://www.spotify.com:443/
-<br/>
-<br/>No "white space", wildcard or other special characters are permitted. 
-<br/>
-<br/>In the notes field you may add your remarks. 
+ --> 
+
 
 <tr class="table" id="url_match_table"><td class="label">match url</td><td class="updatable_user_typed_value_editable" j_name="url_match" contenteditable="true"></td></tr>
+<tr class="table" id="createtime_table"><td class="label">createtime</td><td class="value" j_name="createtime"></td></tr>
+<tr class="table" id="lastmodifiedtime_table"><td class="label">lastmodifiedtime</td><td class="value" j_name="lastmodifiedtime"></td></tr>
 <tr class="table" id="notes_table"><td class="label">notes</td><td class="updatable_user_typed_value_editable" j_name="notes" contenteditable="true"></td></tr>
 
-
 </table>
-
-
 
 <p/>
 Processing steps
 <p/>
 <table class="steps_table" j_name="steps">
-
+<tbody>
 <tr class="headers" ><th>step number</th><th >procedure</th><th >parameter and notes</th><th >step notes</th><th >actions</th></tr>
 
 <tr class="step_row">
@@ -76,12 +64,15 @@ Processing steps
 </td>
 </tr>
 
-
+</tbody>
 </table>
 
-
-<button class="rulelevel_button" id="save_policy_button">Save changes</button>
-<button class="rulelevel_button" id="button_addstep">Add step</button>
+<!-- 
+<button class="objectlevel_button" id="button_addstep">add step</button>
+<button class="objectlevel_button" id="save_changes_button">Save changes</button>
+ -->
+ 
+<button class="objectlevel_button" id="save_policy_button">Save Policy</button>
 
  
 <script src="/popup/add-policy.js"></script>

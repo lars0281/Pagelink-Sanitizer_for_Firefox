@@ -654,19 +654,6 @@ console.debug("###################");
 replaceLink(document.body);
 
 
-//try{
-	
-//var x = document.querySelectorAll("a");
-
- //var i;
- //for (i = 0; i < x.length; i++) {
-
-//		console.debug("## node: " + x[i] );
- //} 
-
-//}catch(e){
-//	console.debug(e);
-//}
 
 //Now monitor the DOM for additions 
 //@see https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver.

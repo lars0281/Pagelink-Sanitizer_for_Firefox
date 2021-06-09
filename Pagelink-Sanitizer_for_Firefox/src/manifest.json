@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Pagelink Sanitizer",
     "author": "Glovebox Team",
-    "description": "To disable pagelinks based on policy. Made by Glovebox",
+    "description": "To disable pagelinks based on policy. Made by Glovebox and Browser Solutions AS",
     "homepage_url": "https://github.com/lars0281/Pagelink-Sanitizer_for_Firefox",
     "version": "1.0.0",
     "icons": {
@@ -26,8 +26,7 @@
         ],
         "default_title":"Pagelink Sanitizer: Diable unauthorized pagelinks in webpages and prevent automatic url calls to unknown and potentially malicious, content."
     },
-
-    "background": {
+     "background": {
         "scripts": [
            "background.js"
         ]

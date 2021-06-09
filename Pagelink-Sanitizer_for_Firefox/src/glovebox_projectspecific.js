@@ -66,30 +66,7 @@ var index_db_config = [{
 
 
 
-var default_policies = [{dbname:'sourceHostnameRuleDB',dbstore:'sourceHostnameRuleStore', keyPath: 'keyId', policy:{
-          keyId: 'https://www.google.com/',
-          url_match: 'https://www.google.com/',
-          scope: 'Hostname',
-          direction: 'source',
-          steps: [{
-                  procedure: "qs_param",
-                  parameters: [{
-                          value: "url",
-                          notes: "read url from querystring"
-                      }
-                  ],
-                  notes: "grab the url parameter from the querystring"
-              }, {
-                  procedure: "uri_decode",
-                  parameters: [],
-                  notes: "uri decode"
-              }
-          ],
-          notes: '',
-          createtime: '202001010001'
-      }}
-	
-,{dbname:'sourceHostnamePolicyDB', dbstore:'sourceHostnamePolicyStore', keyPath:'keyId', policy:{
+var default_policies = [{dbname:'sourceHostnamePolicyDB', dbstore:'sourceHostnamePolicyStore', keyPath:'keyId', policy:{
     keyId: 'https://outlook.office.com/',
     url_match: 'https://outlook.office.com/',
     scope: 'Hostname',

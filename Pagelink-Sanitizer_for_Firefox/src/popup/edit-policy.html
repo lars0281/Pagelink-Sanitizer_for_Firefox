@@ -11,7 +11,7 @@
 
 
 
-<table class="single_rule_table">
+<table class="single_rule_table" indexedDbName="indexedDbName" objectStoreName="objectStoreName">
 
 <!-- The table contains both updatable and non-updatable parameter values. Use different class names to make this distinction.
 (The parameters names are always non-updatable). The user modifiable values are either typed by the user or selected from a drop-down list.
@@ -38,7 +38,7 @@ nonupdatable_user_selected_value
 Processing steps
 <p/>
 <table class="steps_table" j_name="steps">
-<tbody>
+
 <tr class="headers" ><th>step number</th><th >procedure</th><th >parameter and notes</th><th >step notes</th><th >actions</th></tr>
 
 <tr class="step_row">
@@ -61,10 +61,11 @@ Processing steps
 <button class="upstep_button" id="button_generate_default">up</button>
 <button class="deletestep_button" id="button_generate_default">delete</button>
 <button class="downstep_button" id="button_generate_default">down</button>
+<button class="addparameter_button" id="button_generate_default">add parameter</button>
 </td>
 </tr>
 
-</tbody>
+
 </table>
 
 <!-- 

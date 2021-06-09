@@ -1,311 +1,217 @@
 
-console.debug("add-policy.js running");
+
+console.debug("edit-rule.js running");
 
 // attach event listeners
 
 
-    
-    
-    // make update to the html to reflect the information in the rule and what
-    // kind of rule it is.
-    // The html should be disturbed as little as possible since the html should
-    // properly be created by a separate editor ( as far as possible).
+// read the rule to be edited from storage
+//console.debug("read back: " + browser.storage.sync.get(['editThisObject', 'indexedDbName', 'objectStoreName'], function (data) {
+//       console.debug(data);
+//    }));
 
-
-
-browser.storage.sync.get([ 'indexedDbName', 'objectStoreName'], function (data) {
+browser.storage.sync.get(['object_id', 'indexedDbName', 'objectStoreName'], function (data) {
     //browser.storage.sync.get(['editThisObject', 'indexedDbName', 'objectStoreName']).then(function (data) {
 
-	 try {
     // console.debug(data);
     console.debug(JSON.stringify(data));
     // step through the rule object and populate the tables
 
+    var object_id = data.object_id;
 
     var indexedDbName = data.indexedDbName;
     var objectStoreName = data.objectStoreName;
 
+    console.debug(object_id);
     console.debug(indexedDbName);
     console.debug(objectStoreName);
 
+    loadFromIndexedDB_async(indexedDbName, objectStoreName, object_id).then(function (obj) {
+        editThisObject = obj;
 
-     // make updates to the html to reflect the information in the policy and what
+        // make updates to the html to reflect the information in the policy and what
         // kind of policy it is.
         // The html should be disturbed as little as possible since the "html-niceness"should
         // properly be created by a separate editor - as far as possible.
 
-        document.querySelectorAll("table.single_rule_table[indexedDbName=indexedDbName]")[0].setAttribute("indexedDbName",indexedDbName);
-        document.querySelectorAll("table.single_rule_table[objectStoreName=objectStoreName]")[0].setAttribute("objectStoreName", objectStoreName);
+        document.querySelectorAll('table.single_rule_table[indexedDbName="indexedDbName"]')[0].setAttribute("indexedDbName",indexedDbName);
+        document.querySelectorAll('table.single_rule_table[objectStoreName="objectStoreName"]')[0].setAttribute("objectStoreName", objectStoreName);
+        
 
-        
-        
-        
-      
-        
-   var step_row = document.querySelectorAll("tr.step_row")[0];
+//        document.querySelectorAll("table.single_rule_table tr td[j_name=scope]")[0].textContent = editThisObject.scope;
 
-        attachButtonEventlisteners(step_row);
-
-        // all rules must have at least one step, and they have a sequence number.
-        var s = 0;
-        step_row.querySelector("td.rank").textContent = (s + 1);
+        document.querySelectorAll("table.single_rule_table tr td[j_name=url_match]")[0].textContent = editThisObject.url_match;
         
-console.debug(step_row);
-console.debug(step_row.querySelector('td[j_name="procedure"]'));
+        document.querySelectorAll("table.single_rule_table tr td[j_name=notes]")[0].textContent = editThisObject.notes;
 
-// create drop-down list for the procedures
-        step_row.querySelector('td[j_name="procedure"]').appendChild(create_processing_type_dropdown_list());
-        
-       
-        // add listener to the "save policy" button
+        document.querySelectorAll("table.single_rule_table tr td[j_name=createtime]")[0].textContent = editThisObject.createtime;
 
-       //     console.debug("save_policy_button");
-            document.getElementById('save_policy_button').addEventListener('click',
-                function (event) {
-                savePolicyChanges(event);
-            });
-        } catch (e) {
-            console.debug(e);
+        // if no modified time, just use createtime
+        if (editThisObject.lastmodifiedtime != null) {
+            document.querySelectorAll("table.single_rule_table tr td[j_name=lastmodifiedtime]")[0].textContent = editThisObject.lastmodifiedtime;
+        } else {
+            console.debug("no modified");
+
+            document.querySelectorAll("table.single_rule_table tr td[j_name=lastmodifiedtime]")[0].textContent = editThisObject.createtime;
 
         }
 
+    
 
-        // add listener to the "add step" button
+        // set up the table with steps
+        // pic the first line in the table of steps
+        var step_template = document.querySelectorAll("tr.step_row")[0];
+
+        console.debug(step_template);
+
+        // loop through the steps in the rule and clone the step node as required.
+
+        console.debug(editThisObject.steps);
+        console.debug(editThisObject.steps.length);
+        console.debug(JSON.stringify(editThisObject.steps));
+
+        // The template page has one table row for description of the step, use this
+        // row first
+
+        var last_row = document.querySelectorAll("tr.step_row")[0];
+        // last_row refers to the first row at this point
+        attachButtonEventlisteners(last_row);
+
+        // all rules must have at least one step
+        var s = 0;
+        last_row.querySelector("td.rank").textContent = (s + 1);
+        
+        var first_step = editThisObject.steps[0];
+        last_row.querySelector("td[j_name=procedure]").textContent = first_step.procedure;
+        // loop through parameters 
+        if (first_step.parameters.length > 0) {
+            var p = 0;
+            
+            console.debug("parameter: " + JSON.stringify(first_step.parameters));
+            console.debug(new_row);
+
+            var last_param_row = last_row.querySelectorAll("tr.parameter")[0];
+            console.debug(last_param_row);
+            last_param_row.querySelector("td[j_name=value]").textContent = first_step.parameters[p].value;
+            last_param_row.querySelector("td[j_name=notes]").textContent = first_step.parameters[p].notes;
+
+            // are there more parameters?
+            p = 1;
+            while (p < first_step.parameters.length && p < 12) {
+                // add another parameter
+                // ok, need another row so clone the last row (and edit it)
+                var new_param_row = last_param_row.cloneNode(true);
+                new_param_row.querySelector("td[j_name=value]").textContent = first_step.parameters[p].value;
+                // parameter notes
+                new_param_row.querySelector("td[j_name=notes]").textContent = first_step.parameters[p].notes;
+
+                last_param_row.insertAdjacentElement('afterend', new_param_row);
+
+                // make the new parameter row the last row
+                last_param_row = new_param_row;
+                p++;
+            }
+        }
+        // step notes
+        last_row.querySelector("tr.step_row > td[j_name=notes]").textContent = first_step.notes;
+
+        // are there additional steps ?
+        s = 1;
+        // also impose a maximum limit (50)
+        while (s < editThisObject.steps.length && s < 50) {
+            console.debug("step number: " + (s + 1));
+
+            console.debug(editThisObject.steps[s]);
+            console.debug(JSON.stringify(editThisObject.steps[s]));
+
+            // ok, need another row
+            var new_row = create_step_row();
+
+            console.debug(new_row);
+
+            new_row.querySelector("td.rank").textContent = (s + 1);
+            new_row.querySelector("td[j_name=procedure]").textContent = editThisObject.steps[s].procedure;
+
+            // Loop through parameters - assume just one parameter for now
+            // setup a table for the parameter and notes
+            // A parameter is not required, but rather than leaving the table empty,
+            // set "N/A".
+            console.debug(editThisObject.steps[s].parameters);
+            console.debug(JSON.stringify(editThisObject.steps[s].parameters));
+            console.debug("parameter count: " + editThisObject.steps[s].parameters.length);
+            try {
+                if (editThisObject.steps[s].parameters.length > 0) {
+                    var p = 0;
+                    console.debug("parameter: " + JSON.stringify(editThisObject.steps[s].parameters));
+                    console.debug(new_row);
+                    console.debug(new_row);
+                    var last_param_row = new_row.querySelectorAll("tr.parameter")[0];
+                    console.debug(last_param_row);
+                    last_param_row.querySelector("td[j_name=value]").textContent = editThisObject.steps[s].parameters[p].value;
+                    last_param_row.querySelector("td[j_name=notes]").textContent = editThisObject.steps[s].parameters[p].notes;
+
+                    // are there more parameters?
+                    p = 1;
+                    while (p < editThisObject.steps[s].parameters.length && p < 12) {
+                        // add another parameter
+                        // ok, need another row so clone the last row (and edit it)
+                        var new_param_row = last_param_row.cloneNode(true);
+                        new_param_row.querySelector("td[j_name=value]").textContent = editThisObject.steps[s].parameters[p].value;
+                        new_param_row.querySelector("td[j_name=notes]").textContent = editThisObject.steps[s].parameters[p].notes;
+
+                        last_param_row.insertAdjacentElement('afterend', new_param_row);
+
+                        // make the new parameter row the last row
+                        last_param_row = new_param_row;
+                        p++;
+                    }
+                } else {
+                    console.debug("no parameters..");
+                }
+            } catch (f) {
+                console.error(f);
+            }
+            // set the notes field for the whole step row
+            new_row.querySelector("tr.step_row>td[j_name=notes]").textContent = editThisObject.steps[s].notes;
+
+            console.debug(new_row);
+            // append this new row and make the inserted row the new last row
+            // last_row = last_row.parentNode.insertBefore( p3, last_row);
+            last_row.insertAdjacentElement('afterend', new_row);
+
+            // make the new row the last row
+            last_row = new_row;
+            s++;
+        }
+
+        // add listener to the "edit rule" button
 
         try {
             // addStep(event)
-            document.getElementById('button_addstep').addEventListener('click',
+            console.debug("edit_policy_button");
+            document.getElementById('edit_policy_button').addEventListener('click',
                 function (event) {
-                addStep(event);
+                editPolicy(event);
             });
         } catch (e) {
-            console.debug(e);
+            //console.debug(e);
 
         }
+
+    });
 });
 
+// Receive message from background-script
+browser.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    // if (sender.url === THIS_PAGE_URL)
+    // return
+    console.debug("<br>PopuP received a new msg: " + message.msg);
 
-
-    
-    
-
-
-
-
-
-
-
-
-//create a step row
-function create_step_row() {
-  console.debug("create_step_row");
-  var newRow = document.createElement('tr');
-  newRow.setAttribute("class", "step_row");
-
-  // first cell if which rank this step has in the overall policy object
-
-  var newcell_l = document.createElement('td');
-  newcell_l.setAttribute("class", "rank");
-  // compute rank
-  newcell_l.appendChild(document.createTextNode((getStepCount() + 1)));
-  console.debug(newcell_l);
-  newRow.appendChild(newcell_l);
-
-  // table cell for the procedure
-  var newcell_2 = document.createElement('td');
-  newcell_2.setAttribute("class", "procedure");
-  newcell_2.setAttribute("j_name", "procedure");
-
-  // create drop-down list in this cell later
-
-//  newcell_2.appendChild(create_processing_type_dropdown_list);
-
-  //newcell_2.appendChild(document.createTextNode("dropdown"));
-  //newcell_2.setAttribute("contenteditable", "true");
-
-  newRow.appendChild(newcell_2);
-
-  // table cell for parameters
-
-  var newcell_3 = document.createElement('td');
-  newcell_3.setAttribute("class", "parameters");
-
-  // within the parameters cell, setup a table for the parameters
-  // where each row has two cells
-  var newtable_2 = document.createElement('table');
-  newtable_2.setAttribute("class", "parameters_table");
-  newtable_2.setAttribute("j_name", "parameters");
-
-  // parameter table row
-  var newrow_2 = document.createElement('tr');
-  newrow_2.setAttribute("class", "parameter");
-
-  // parameter table cell for the parameter value
-
-  var newcell_31 = document.createElement('td');
-  newcell_31.setAttribute("class", "updatable_user_typed_value");
-  newcell_31.setAttribute("j_name", "value");
-  newcell_31.setAttribute("contenteditable", "true");
-
-  newcell_31.appendChild(document.createTextNode("default"));
-
-  newrow_2.appendChild(newcell_31);
-
-  // parameter table cell for the parameter notes/remarks
-
-  var newcell_32 = document.createElement('td');
-  newcell_32.setAttribute("class", "updatable_user_typed_value");
-  newcell_32.setAttribute("j_name", "notes");
-  newcell_32.setAttribute("contenteditable", "true");
-
-  newcell_32.appendChild(document.createTextNode("default"));
-
-  // edit_cell2.setAttribute("contenteditable", "true");
-  // edit_cell2.setAttribute("class", "value_editable");
-
-  newrow_2.appendChild(newcell_32);
-
-  newtable_2.appendChild(newrow_2);
-  newcell_3.appendChild(newtable_2);
-  newRow.appendChild(newcell_3);
-
-  // notes
-  var newcell_4 = document.createElement('td');
-  newcell_4.setAttribute("class", "updatable_user_typed_value");
-  newcell_4.setAttribute("j_name", "notes");
-  newcell_4.setAttribute("contenteditable", "true");
-  // create drop-down list in this cell
-  newcell_4.appendChild(document.createTextNode("text"));
-  newRow.appendChild(newcell_4);
-
-  // cell for buttons
-  var newcell_5 = document.createElement('td');
-  newcell_5.setAttribute("class", "buttons");
-  // create new edit button
-  var newbutton_1 = document.createElement('button');
-  newbutton_1.setAttribute("class", "editstep_button");
-  // newbutton_1.setAttribute("id", "button_generate_default");
-  newbutton_1.appendChild(document.createTextNode("edit"));
-  newcell_5.appendChild(newbutton_1);
-
-  // create new up button
-  var newbutton_2 = document.createElement('button');
-  newbutton_2.setAttribute("class", "deletestep_button");
-  // newbutton_2.setAttribute("id", "button_generate_default");
-  newbutton_2.appendChild(document.createTextNode("up"));
-
-  newcell_5.appendChild(newbutton_2);
-
-  // create new delete button
-  var newbutton_3 = document.createElement('button');
-  newbutton_3.setAttribute("class", "deletestep_button");
-  // newbutton_3.setAttribute("id", "button_generate_default");
-  newbutton_3.appendChild(document.createTextNode("delete"));
-
-  newcell_5.appendChild(newbutton_3);
-
-  // create new delete button
-  var newbutton_4 = document.createElement('button');
-  newbutton_4.setAttribute("class", "downstep_button");
-  // newbutton_4.setAttribute("id", "button_generate_default");
-  newbutton_4.appendChild(document.createTextNode("down"));
-
-  newcell_5.appendChild(newbutton_4);
-  newRow.appendChild(newcell_5);
-
-  // attach event listeners to buttons in this row
-  attachButtonEventlisteners(newRow);
-  return newRow;
-}
-
-function getStepCount() {
-  console.debug("# getStepCount");
-
-  var res = document.querySelectorAll("tr.step_row").length;
-  console.debug("step count = " + res);
-  return res;
-
-}
-
-function getRank(tablerownode) {
-  console.debug("# getRank");
-  console.debug(tablerownode);
-
-  var max_itterations = 5;
-  var m = 0;
-
-  var rank = 1;
-
-  var previous_row = tablerownode.previousSibling;
-  while (m < max_itterations && isStepRow(previous_row)) {
-      previous_row = previous_row.previousSibling;
-      rank++;
-      m++;
-
-  }
-  console.debug("rank = " + rank);
-  return rank;
-}
-
-function isStepRow(node) {
-
-  console.debug("# isStepRow");
-  console.debug(node);
-  try {
-      if (node.getAttribute('class') == 'step_row') {
-          console.debug("is step row = true");
-          return true;
-      } else {
-          console.debug("is step row = false");
-          return false;
-      }
-  } catch (e) {
-      console.debug("is step row = false");
-      return false;
-  }
-}
-
-
-function getCurrentTimestamp(){
-	
-	
-	   // compute current timestamp
-    var today = new Date();
-
-    var YYYY = today.getFullYear();
-    var MM = (today.getMonth() + 1);
-    var DD = (today.getDate() + 1);
-
-    if (MM < 10) {
-        MM = "0" + MM;
-    }
-
-    if (DD < 10) {
-        DD = "0" + DD;
-    }
-
-    var HH = (today.getHours() + 1);
-
-    if (HH < 10) {
-        HH = "0" + HH;
-    }
-
-    var mm = (today.getMinutes() + 1);
-
-    if (mm < 10) {
-        mm = "0" + mm;
-    }
-
-    var ss = (today.getSeconds() + 1);
-
-    if (ss < 10) {
-        ss = "0" + ss;
-    }
-
-    return dateTime = YYYY + MM + DD + HH + mm + ss;
-	
-}
-
+    sendResponse({
+        msg: "This is an auto-response message sent from the popup"
+    })
+    return true
+});
 
 function attachButtonEventlisteners(node) {
 
@@ -625,6 +531,8 @@ function editPolicy(event) {
 
 }
 
+
+
 /*
  * make form fields non-ediatble, change the visible aspect to reflect this (change class attributes). Save the object back to the dataasbe.
  * */
@@ -641,9 +549,6 @@ function savePolicyChanges(event) {
     var keyId = document.querySelector("table.single_rule_table tr td[j_name=url_match]").textContent;
 
    
-    var db = "";
-    var store = "";
-    
 //    table_obj.setAttribute("indexedDbName", indexedDbName);
  //   table_obj.setAttribute("objectStoreName", objectStoreName);
     var indexedDbName = "";
@@ -663,10 +568,15 @@ function savePolicyChanges(event) {
     var new_obj = read_object_from_form();
 
     saveUpdateToIndexedDB_async(indexedDbName, objectStoreName, 'keyId', new_obj).then(function(){
+    	
+    	
+
+    
+
 	
 	// send message to background, to request a refresh of the in-memory databases for this policy object
     	browser.runtime.sendMessage({
-    		request: {"policy":"single_update","update_details":{"database":indexedDbName,"datastore":objectStoreName,"object":new_obj} }
+    		request: {"policy":"single_update","update_details":{"database":saveUpdateToIndexedDB_async,"datastore":objectStoreName,"object":new_obj} }
     	}, function (response) {
     		console.debug("message sent to backgroup.js with response: " + JSON.stringify(response));
     	});
@@ -781,23 +691,26 @@ function read_object_from_form() {
     try {
 
         // keyid
-        // remove all whitespace
         var keyId = document.querySelector("table.single_rule_table tr td[j_name=url_match]").textContent;
 
         // validate data content
         console.debug(keyId);
-// restruct to characters that may appear in a domain name
-        new_obj.keyId = keyId.replace(/[\s]/gi,"").replace(/[^a-zA-Z0-9\.:\/\-_]/gi,"");
 
-        console.debug(new_obj.keyId);
+        new_obj.keyId = keyId;
 
         // url_match
-        // remove all whitespace
         var url_match = document.querySelector("table.single_rule_table tr td[j_name=url_match]").textContent;
 
         // validate data content
- // remove all whitespace
-        new_obj.url_match = url_match.replace(/[\s]/gi,"").replace(/[^a-zA-Z0-9\.:\/\-_]/gi,"");
+
+        new_obj.url_match = url_match;
+
+        // scope
+        var scope = document.querySelector("table.single_rule_table tr td[j_name=scope]").textContent;
+
+        // validate data content
+
+        new_obj.scope = scope;
 
         // steps
       
@@ -810,7 +723,7 @@ function read_object_from_form() {
         while (s < steps.length && s < 12) {
             console.debug(steps[s]);
             // st[m].setAttribute("contenteditable", "false");
-          
+            try {
             	var step = {};
                 var procedure = "";
                 var list = steps[s].querySelector("td[j_name=procedure] select");
@@ -851,8 +764,7 @@ function read_object_from_form() {
                     while (p < pt.length && p < 50) {
                   //      console.debug(pt[p]);
                         var value = "";
-                        // remove non-space whitespace characters
-                        value = pt[p].querySelector("td[j_name=value]").textContent.replace(/ /gi,"_place_holder_for_spacechar_").replace(/[\s]/gi,"").replace(/_place_holder_for_spacechar_/gi," ");
+                        value = pt[p].querySelector("td[j_name=value]").textContent;
                         // notes for this paramter
                         var notes = ""; 
                         	notes = pt[p].querySelector("td[j_name=notes]").textContent;
@@ -877,13 +789,15 @@ function read_object_from_form() {
                 step.notes = step_notes;
                // console.debug(JSON.stringify(step));
                 new_obj.steps.push(step);
-          
+            } catch (g) {
+                console.error(g);
+            }
             //new_obj.steps = steps;
             s++;
         }
 
         // notes for this policy
-        var notes = document.querySelector("table.single_rule_table tr > td[j_name=notes]").textContent.replace(/[^\w]/gi,"");
+        var notes = document.querySelector("table.single_rule_table tr > td[j_name=notes]").textContent;
 
         console.debug("policy notes: " + notes);
 
@@ -1013,7 +927,7 @@ function addParameter(event) {
     // first cell if which rank this step has in the overall policy object
 
     var newcell_l = document.createElement('td');
-    newcell_l.setAttribute("class", "updatable_user_typed_value_editable");
+    newcell_l.setAttribute("class", "updatable_user_typed_value");
     newcell_l.setAttribute("j_name", "value");
     newcell_l.textContent = "new value";
 
@@ -1021,7 +935,7 @@ function addParameter(event) {
 
     // table cell for the procedure
     var newcell_2 = document.createElement('td');
-    newcell_2.setAttribute("class", "updatable_user_typed_value_editable");
+    newcell_2.setAttribute("class", "updatable_user_typed_value");
     newcell_2.setAttribute("j_name", "notes");
     newRow.appendChild(newcell_2);
 
@@ -1129,9 +1043,8 @@ function addStep(event) {
     console.debug(newRow.querySelector("td.procedure"));
 
     // add drop-down list
-var dropdownlist = create_processing_type_dropdown_list();
-    console.debug(dropdownlist);
-    newRow.querySelector("td.procedure").appendChild(dropdownlist);
+
+    newRow.querySelector("td.procedure").appendChild(create_processing_type_dropdown_list());
     // do not any pre-selection in the dropdown
 
     // set the rank number for this step
@@ -1150,6 +1063,173 @@ var dropdownlist = create_processing_type_dropdown_list();
 
 }
 
+// create a step row
+function create_step_row() {
+    console.debug("create_step_row");
+    var newRow = document.createElement('tr');
+    newRow.setAttribute("class", "step_row");
+
+    // first cell if which rank this step has in the overall policy object
+
+    var newcell_l = document.createElement('td');
+    newcell_l.setAttribute("class", "rank");
+    // compute rank
+    newcell_l.appendChild(document.createTextNode((getStepCount() + 1)));
+    newRow.appendChild(newcell_l);
+
+    // table cell for the procedure
+    var newcell_2 = document.createElement('td');
+    newcell_2.setAttribute("class", "procedure");
+    newcell_2.setAttribute("j_name", "procedure");
+
+    // create drop-down list in this cell
+
+    //newcell_2.appendChild(create_processing_type_dropdown_list);
+
+    //newcell_2.appendChild(document.createTextNode("dropdown"));
+    //newcell_2.setAttribute("contenteditable", "true");
+
+    newRow.appendChild(newcell_2);
+
+    // table cell for parameters
+
+    var newcell_3 = document.createElement('td');
+    newcell_3.setAttribute("class", "parameters");
+
+    // within the parameters cell, setup a table for the parameters
+    // where each row has two cells
+    var newtable_2 = document.createElement('table');
+    newtable_2.setAttribute("class", "parameters_table");
+    newtable_2.setAttribute("j_name", "parameters");
+
+    // parameter table row
+    var newrow_2 = document.createElement('tr');
+    newrow_2.setAttribute("class", "parameter");
+
+    // parameter table cell for the parameter value
+
+    var newcell_31 = document.createElement('td');
+    newcell_31.setAttribute("class", "updatable_user_typed_value");
+    newcell_31.setAttribute("j_name", "value");
+    newcell_31.setAttribute("contenteditable", "true");
+
+    newcell_31.appendChild(document.createTextNode("default"));
+
+    newrow_2.appendChild(newcell_31);
+
+    // parameter table cell for the parameter notes/remarks
+
+    var newcell_32 = document.createElement('td');
+    newcell_32.setAttribute("class", "updatable_user_typed_value");
+    newcell_32.setAttribute("j_name", "notes");
+    newcell_32.setAttribute("contenteditable", "true");
+
+    newcell_32.appendChild(document.createTextNode("default"));
+
+    // edit_cell2.setAttribute("contenteditable", "true");
+    // edit_cell2.setAttribute("class", "value_editable");
+
+    newrow_2.appendChild(newcell_32);
+
+    newtable_2.appendChild(newrow_2);
+    newcell_3.appendChild(newtable_2);
+    newRow.appendChild(newcell_3);
+
+    // notes
+    var newcell_4 = document.createElement('td');
+    newcell_4.setAttribute("class", "updatable_user_typed_value");
+    newcell_4.setAttribute("j_name", "notes");
+    newcell_4.setAttribute("contenteditable", "true");
+    // create drop-down list in this cell
+    newcell_4.appendChild(document.createTextNode("text"));
+    newRow.appendChild(newcell_4);
+
+    // cell for buttons
+    var newcell_5 = document.createElement('td');
+    newcell_5.setAttribute("class", "buttons");
+    // create new edit button
+    var newbutton_1 = document.createElement('button');
+    newbutton_1.setAttribute("class", "editstep_button");
+    // newbutton_1.setAttribute("id", "button_generate_default");
+    newbutton_1.appendChild(document.createTextNode("edit"));
+    newcell_5.appendChild(newbutton_1);
+
+    // create new up button
+    var newbutton_2 = document.createElement('button');
+    newbutton_2.setAttribute("class", "deletestep_button");
+    // newbutton_2.setAttribute("id", "button_generate_default");
+    newbutton_2.appendChild(document.createTextNode("up"));
+
+    newcell_5.appendChild(newbutton_2);
+
+    // create new delete button
+    var newbutton_3 = document.createElement('button');
+    newbutton_3.setAttribute("class", "deletestep_button");
+    // newbutton_3.setAttribute("id", "button_generate_default");
+    newbutton_3.appendChild(document.createTextNode("delete"));
+
+    newcell_5.appendChild(newbutton_3);
+
+    // create new delete button
+    var newbutton_4 = document.createElement('button');
+    newbutton_4.setAttribute("class", "downstep_button");
+    // newbutton_4.setAttribute("id", "button_generate_default");
+    newbutton_4.appendChild(document.createTextNode("down"));
+
+    newcell_5.appendChild(newbutton_4);
+    newRow.appendChild(newcell_5);
+
+    // attach event listeners to buttons in this row
+    attachButtonEventlisteners(newRow);
+    return newRow;
+}
+
+function getStepCount() {
+    console.debug("# getStepCount");
+
+    var res = document.querySelectorAll("tr.step_row").length;
+    console.debug("step count = " + res);
+    return res;
+
+}
+
+function getRank(tablerownode) {
+    console.debug("# getRank");
+    console.debug(tablerownode);
+
+    var max_itterations = 5;
+    var m = 0;
+
+    var rank = 1;
+
+    var previous_row = tablerownode.previousSibling;
+    while (m < max_itterations && isStepRow(previous_row)) {
+        previous_row = previous_row.previousSibling;
+        rank++;
+        m++;
+
+    }
+    console.debug("rank = " + rank);
+    return rank;
+}
+
+function isStepRow(node) {
+
+    console.debug("# isStepRow");
+    console.debug(node);
+    try {
+        if (node.getAttribute('class') == 'step_row') {
+            console.debug("is step row = true");
+            return true;
+        } else {
+            console.debug("is step row = false");
+            return false;
+        }
+    } catch (e) {
+        console.debug("is step row = false");
+        return false;
+    }
+}
 
 function saveUpdateToIndexedDB_async(dbName, storeName, keyId, object) {
 
@@ -1179,26 +1259,23 @@ function saveUpdateToIndexedDB_async(dbName, storeName, keyId, object) {
             console.debug(error);
 
         }
-        console.debug("saveUpdateToIndexedDB_async: 1 dbRequest=" + dbRequest);
+       // console.debug("saveUpdateToIndexedDB_async: 1 dbRequest=" + dbRequest);
 
         dbRequest.onerror = function (event) {
             console.debug("saveUpdateToIndexedDB_async:error.open:db " + dbName);
             reject(Error("IndexedDB database error"));
         };
 
-        console.debug("saveUpdateToIndexedDB_async: 2" + JSON.stringify(dbRequest));
-
-        console.debug("saveUpdateToIndexedDB_async: 3" + JSON.stringify(dbRequest));
-        try {
+    try {
 
             dbRequest.onsuccess = function (event) {
-                console.debug("saveUpdateToIndexedDB_async: 31");
+               // console.debug("saveUpdateToIndexedDB_async: 31");
                 var database = event.target.result;
-                console.debug("saveUpdateToIndexedDB_async: 32");
+                //console.debug("saveUpdateToIndexedDB_async: 32");
                 var transaction = database.transaction([storeName], 'readwrite');
-                console.debug("saveUpdateToIndexedDB_async: 33");
+               // console.debug("saveUpdateToIndexedDB_async: 33");
                 var objectStore = transaction.objectStore(storeName);
-                console.debug("saveUpdateToIndexedDB_async:objectStore put: " + JSON.stringify(object));
+               // console.debug("saveUpdateToIndexedDB_async:objectStore put: " + JSON.stringify(object));
 
                 var objectRequest = objectStore.put(object); // Overwrite if
                 // already
@@ -1291,4 +1368,3 @@ function loadFromIndexedDB_async(dbName, storeName, id) {
         };
     });
 }
-
