@@ -68,45 +68,643 @@ let indexedDB;
  *
  */
 
-// context menu related
+// context menu related - not in version 1.0
 
-
-/*
- * to add context menu item for analysing links Added in v 1.0
- */
-
-browser.contextMenus.create({
-    id: "glovebox-link-reveal",
-    title: "reveal the true endpoint of this link",
-    contexts: ["link"]
-});
 
 indexedDB = window.indexedDB || window.webkitIndexedDB ||
     window.mozIndexedDB || window.msIndexedDB;
 
-
 if (!window.indexedDB) {
     console.debug("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
 } else {
-//    console.debug("1.1.0");
+    //    console.debug("1.1.0");
 }
 
+var index_db_config = [{
+        dbname: "sourceDomainPolicyDB",
+        objectstore: [{
+                name: "sourceDomainPolicyStore",
+                keyPath: "keyId",
+                autoIncrement: false,
+                index: [{
+                        n: "keyId",
+                        o: "keyId",
+                        unique: "true"
+                    }
+                ]
+            }
+        ]
+    }, {
+        dbname: "sourceHostnamePolicyDB",
+        objectstore: [{
+                name: "sourceHostnamePolicyStore",
+                keyPath: "keyId",
+                autoIncrement: false,
+                index: [{
+                        n: "keyId",
+                        o: "keyId",
+                        unique: "true"
+                    }
+                ]
+            }
+        ]
+    }, {
+        dbname: "sourceURLPolicyDB",
+        objectstore: [{
+                name: "sourceURLPolicyStore",
+                keyPath: "keyId",
+                autoIncrement: false,
+                index: [{
+                        n: "keyId",
+                        o: "keyId",
+                        unique: "true"
+                    }
+                ]
+            }
+        ]
+    }
+];
 
+// set a default processing steps to be use in cases where a policy exists but contains no valid processing steps
+var default_steps = [{
+        "procedure": "regexp",
+        "parameters": [{
+                "value": "sD^(http)Ddisabled$1Dg",
+                "notes": "prefix the protocol with the word disbaled"
+            }
+        ],
+        "notes": "disable fully qualified URLs pointing to non-local domains"
+    }, {
+        "procedure": "regexp",
+        "parameters": [{
+                "value": "sD^(http)Ddisabled$1Dg",
+                "notes": "prefix the protocol with the word disbaled"
+            }
+        ],
+        "notes": "disable fully qualified URLs pointing to non-local domains"
+    }
+]
+
+var default_policies = [{
+        dbname: 'sourceDomainPolicyDB',
+        dbstore: 'sourceDomainPolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://www.google.com/',
+            url_match: 'https://www.google.com/',
+            scope: 'Hostname',
+            direction: 'source',
+            steps: [{
+                    procedure: "qs_param",
+                    parameters: [{
+                            value: "url",
+                            notes: "read url from querystring"
+                        }
+                    ],
+                    notes: "grab the url parameter from the querystring"
+                }, {
+                    procedure: "uri_decode",
+                    parameters: [],
+                    notes: "uri decode"
+                }
+            ],
+            notes: '',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://outlook.office.com/',
+            url_match: 'https://outlook.office.com/',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.office.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .office.com domain"
+                        }
+                    ],
+                    "notes": "Allow .office.com domains as local"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.microsoft.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .microsoft.com domain"
+                        }
+                    ],
+                    "notes": "Allow .microsoft.com hostnames too."
+                }
+            ],
+            notes: 'Disable external links in Oulook emails',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://mail.yahoo.com/',
+            url_match: 'https://mail.yahoo.com/',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.yahoo.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URL in the .yahoo.com domain"
+                        }
+                    ],
+                    "notes": "Allow .yahoo.com domains as local"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.yimg.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URL in the .yimg.com domain"
+                        }
+                    ],
+                    "notes": "Allow yimg.com domain too."
+                }
+            ],
+            notes: 'Disable external links in Yahoo mail',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://mail.exchange.microsoft.com/',
+            url_match: 'https://mail.exchange.microsoft.com/',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.microsoft.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .microsoft.com domain"
+                        }
+                    ],
+                    "notes": "Allow .microsoft.com hostnames"
+                }
+            ],
+            notes: 'Disable external links in MS Exchange mail',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://mail.google.com/',
+            url_match: 'https://mail.google.com/',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.google.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .google.com domain"
+                        }
+                    ],
+                    "notes": "Allow .google.com hostnames"
+                }
+            ],
+            notes: 'Disable external links in GMail messages',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://mail.aol.com/',
+            url_match: 'https://mail.aol.com/',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.aol.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .aol.com domain"
+                        }
+                    ],
+                    "notes": "Allow .aol.com hostnames"
+                }
+            ],
+            notes: 'Disable external links in AOL messages',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://mail.yandex.com/',
+            url_match: 'https://mail.yandex.com/',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.yandex.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .yandex.com domain"
+                        }
+                    ],
+                    "notes": "Allow .yandex.com hostnames"
+                }
+            ],
+            notes: 'Disable external links in Yandex messages',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://www.nytimes.com/',
+            url_match: 'https://www.nytimes.com/',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.nytimes.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .nytimes.com domain"
+                        }
+                    ],
+                    "notes": "Allow .nytimes.com hostnames"
+                }
+            ],
+            notes: 'Disable external links in new york times',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://mail.protonmail.com/',
+            url_match: 'https://mail.protonmail.com/',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.protonmail.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .protonmail.com domain"
+                        }
+                    ],
+                    "notes": "Allow .protonmail.com hostnames"
+                }
+            ],
+            notes: 'Disable external links in Protonmail messages',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceHostnamePolicyDB',
+        dbstore: 'sourceHostnamePolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://mail.tutanota.com/',
+            url_match: 'https://mail.tutanota.com/',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.tutanota.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .tutanota.com domain"
+                        }
+                    ],
+                    "notes": "Allow .tutanota.com hostnames"
+                }
+            ],
+            notes: 'Disable external links in Tutanota messages',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceDomainPolicyDB',
+        dbstore: 'sourceDomainPolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'bbc.co.uk',
+            url_match: 'bbc.co.uk',
+            scope: 'Domain',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "Disable all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.bbc.co.uk)D$1Dg",
+                            "notes": "default"
+                        }
+                    ],
+                    "notes": "Allow all .bbc.co.uk domains as local"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.bbci.co.uk)D$1Dg",
+                            "notes": "default"
+                        }
+                    ],
+                    "notes": "Allow .bbci.co.uk domains too."
+                }
+            ],
+            notes: 'test pagelink sanitation policy',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceDomainPolicyDB',
+        dbstore: 'sourceDomainPolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'bbc.com',
+            url_match: 'bbc.com',
+            scope: 'Domain',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "Disable all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.bbc.com)D$1Dg",
+                            "notes": "default"
+                        }
+                    ],
+                    "notes": "Allow all .bbc.com domains as local"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.bbci.co.uk)D$1Dg",
+                            "notes": "default"
+                        }
+                    ],
+                    "notes": "Allow .bbci.co.uk domains too."
+                }
+            ],
+            notes: 'test pagelink sanitation policy',
+            createtime: '202001010001'
+        }
+    }, {
+        dbname: 'sourceURLPolicyDB',
+        dbstore: 'sourceURLPolicyStore',
+        keyPath: 'keyId',
+        policy: {
+            keyId: 'https://www.zoho.com/mail',
+            url_match: 'https://www.zoho.com/mail',
+            scope: 'Hostname',
+            "steps": [{
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^(https)Ddisabled$1Dg",
+                            "notes": "prefix the protocol for all fully qualified URLs"
+                        }
+                    ],
+                    "notes": "Disable all external links"
+                }, {
+                    "procedure": "regexp",
+                    "parameters": [{
+                            "value": "sD^disabled(https://[^/]*.zoho.com)D$1Dg",
+                            "notes": "remove the disabled prefix from the protocol for URLs in the .zoho.com domain"
+                        }
+                    ],
+                    "notes": "Allow .zoho.com hostnames"
+                }
+            ],
+            notes: 'Disable external links in Zoho messages',
+            createtime: '202001010001'
+        }
+    }
+
+];
+
+//maintain current policies in hash tables
+
+var in_memory_policies = {};
+
+in_memory_policies["sourceURLPolicyDB"] = {};
+in_memory_policies["sourceDomainPolicyDB"] = {};
+in_memory_policies["sourceHostnamePolicyDB"] = {};
 
 //Set required indexeddb database and default items in those databases.
 indexeddb_setup_async(indexedDB).then(function (res) {
-	console.debug(res);
- return generate_default_link_rules_async();
-}).then(function (res) {
- console.debug(res);
-}).catch(function(f){
-	console.debug(f);
-	return generate_default_link_rules_async();
-}).then(function(){
-	console.debug("complete");
-});
-	
+    // console.debug(res);
+    return setup_default_policies_async();
 
+}).then(function () {
+    console.debug("complete");
+
+    return refresh_inmemory_policy_datastore_async("sourceDomainPolicyDB", "sourceDomainPolicyStore","keyId");
+}).then(function () {
+
+    return refresh_inmemory_policy_datastore_async("sourceHostnamePolicyDB", "sourceHostnamePolicyStore","keyId");
+}).then(function () {
+    return refresh_inmemory_policy_datastore_async("sourceURLPolicyDB", "sourceURLPolicyStore","keyId");
+}).then(function () {}).then(function () {
+    console.debug("inmemory databases refreshed");
+    console.debug(JSON.stringify(in_memory_policies));
+
+    console.debug("1.0.5");
+
+});
+
+
+// kill external web requests matching certain rules
+// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest
+// attach listener
+try {
+    browser.webRequest.onBeforeRequest.addListener(
+        function (event) {
+
+        // check documentURL if there is a policy for this page
+
+        // then check url to see if it goes outside the allowed range
+
+        var from_url = "";
+        try {
+            if (typeof event.frameAncestors[0] !== 'undefined') {
+                from_url = event.frameAncestors[0].url;
+            } else {
+                if (typeof event.documentUrl !== 'undefined') {
+                    from_url = event.documentUrl;
+                } else {
+                    // in some cases (links held in local html files) the documentUrl is not set, so use url
+                    console.debug("local file source");
+                    from_url = event.url;
+                }
+            }
+        } catch (e) {
+            from_url = event.documentUrl;
+        }
+        // check if there is policy for this "from" page
+
+        var applicable_policy = policy_discovery_for_location(from_url);
+
+        //console.debug("from url: " + from_url);
+        //console.debug("to url: " + event.url);
+        //console.debug("applicable_policy: " + JSON.stringify(applicable_policy));
+
+        if (typeof applicable_policy !== 'undefined') {
+            // ok, there is a policy for links on this page
+            // apply it
+            //   console.debug("click event: " + JSON.stringify(event));
+
+            var new_url = apply_policy(event.url, applicable_policy);
+
+            //   console.debug("url: " + new_url);
+            //    console.debug("url length: " + new_url.length);
+
+            // if policy outputs no data, allow the traffic
+
+            if (new_url.length > 0) {
+                // type different outcomes are relevant here: rewrite the URL or block it. (The policy may also leave the URL unchanged)
+                // blocking the URL means prefixing it with the word "disabled".
+                // use regexp to identify links that should be blocked
+                var is_blocked = new RegExp("^disable[d]*http[s]*:/[\/]*", 'i');
+
+                //      console.debug(is_blocked.test(new_url));
+                if (is_blocked.test(new_url)) {
+                    // block the request
+                    var blockingResponse = {};
+                    blockingResponse.cancel = true;
+                    //console.debug("decision: block");
+                    //         console.debug(JSON.stringify(blockingResponse));
+                    return blockingResponse;
+                } else {
+                    var blockingResponse = {};
+                    blockingResponse.cancel = false;
+                    //console.debug("decision: pass");
+
+                    //       console.debug(JSON.stringify(blockingResponse));
+                    return blockingResponse;
+                }
+            } else {
+                // nothing returned, so lets go with default behaviour.
+                // For this application (Pagelink-Sanitizer add-on), default behaviour is that if there is any policy for a URL at all,
+                // linked from the URL should be blocked unless
+                // they point to local sibling domains. example: meil.google.com is a sibling domain of www.google.com. Links from one to the other should be allowed by default.
+
+                // compute the local domain. This means the name one-level above the fully qualified name. F.ex. if the FQDN is news.bbc.co.uk the local domainname is bbc.co.uk
+                console.debug("from_url: " + from_url);
+
+                var parent_domain = from_url.replace(/^http[s]*:\/\/[^\.]*\.([^\/]*)\/.*/i, '$1');
+                console.debug("parent domain: " + parent_domain);
+
+                // use regexp to identify links that are local
+                var test_for_localness = new RegExp("^http[s]*://[^\/]*\." + parent_domain + "[:]*[0-9]*", 'i');
+                console.debug(test_for_localness);
+
+                var is_sibling_domain = test_for_localness.test(event.url);
+                console.debug("is_sibling_domain: " + is_sibling_domain);
+                // if local, then allow this request
+                if (is_sibling_domain) {
+                    var blockingResponse = {};
+                    blockingResponse.cancel = false;
+                    console.debug(JSON.stringify(blockingResponse));
+                    return blockingResponse;
+                } else {
+                    // else block it
+                    var blockingResponse = {};
+                    blockingResponse.cancel = true;
+                    console.debug(JSON.stringify(blockingResponse));
+                    return blockingResponse;
+                }
+
+            }
+
+        } else {
+            // no policy, so just carry on
+            // console.debug ("steady as you go, there was is policy in place for this one." );
+            var blockingResponse = {};
+            blockingResponse.cancel = false;
+            //console.debug(JSON.stringify(blockingResponse));
+            return blockingResponse;
+
+        }
+
+    }, {
+        urls: ["<all_urls>"]
+    },
+        ["blocking"]);
+} catch (g) {
+    console.error(g);
+}
 
 // listener for message sent from the admin page of the plugin
 browser.runtime.onMessage.addListener(function (message, sender, sendResponse) {
@@ -118,13 +716,38 @@ browser.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     var source_tab_url = sender.url;
 
     try {
-        console.debug("received from page:  message: " + JSON.stringify(message) + " message.type=" + message.type);
+        console.debug("received from page:  message: " + JSON.stringify(message));
 
         console.debug("request:" + JSON.stringify(message.request));
 
-        console.debug("request:" + message.request.possible_pagelink_sanitation_job);
+        // message to request a refresh of policies
+        if (message.request.refresh == 'policies') {
+            console.debug("refresh policies");
+            // re-read in memory policy set from the databases
+            refresh_inmemory_policy_datastore_async("sourceDomainPolicyDB", "sourceDomainPolicyStore").then(function () {
 
-        if (message.request.sendRule == 'toEditPopup') {
+                return refresh_inmemory_policy_datastore_async("sourceHostnamePolicyDB", "sourceHostnamePolicyStore");
+            }).then(function () {
+                return refresh_inmemory_policy_datastore_async("sourceURLPolicyDB", "sourceURLPolicyStore");
+            }).then(function (result) {
+                sendResponse(result);
+
+            });
+
+        } else if (message.request.policy == 'single_update') {
+            // message to request an update to the in-memory policy database
+
+            var update_details = message.request.update_details;
+            console.debug(JSON.stringify(update_details));
+
+            // this change has already been written into the database. Only the in-memory database needs updating
+            // console.debug("database:" + update_details.database);
+            // console.debug("datastore:" + update_details.datastore);
+            // console.debug("keyId:" + update_details.object.keyId);
+
+            in_memory_policies[update_details.database][update_details.object.keyId] = update_details.object;
+
+        } else if (message.request.sendRule == 'toEditPopup') {
             console.debug("contact edit popup:");
 
             var page_message = message.message;
@@ -143,45 +766,49 @@ browser.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             console.debug("possible job for page link sanitation: " + page_url);
             // examine this URL for any applicable policies
 
-            policy_discovery_for_location_async(page_url).then(function (res) {
-                console.debug(res);
+            //            policy_discovery_for_location_async(page_url).then(function (res) {
+            //              console.debug(res);
 
-                // if policy found, proceed with sending script back to tab
-                if (res) {
+            res = policy_discovery_for_location(page_url);
 
-                    //send
-                    console.debug("### calling ./content_scripts/RewritePageLinks.js on tab_id=" + source_tab_id);
+            // if policy found, proceed with sending script back to tab
+            if (res) {
 
-                    browser.tabs.executeScript(source_tab_id, {
-                        file: "./content_scripts/RewritePageLinks.js",
-                        allFrames: true
-                    }).then(function (result) {
-                        console.debug("background.js:onExecuted4: We made it ....");
-                        // console.debug("background.js:onExecuted4: result: " + result);
-                        // console.debug("backgroupd.js:onExecuted4:selected_text: " +
-                        // selected_text);
-                        // console.debug("backgroupd.js:onExecuted4:replacement_text: " +
-                        // replacement_text);
-                        // query for the one active tab
-                        return browser.tabs.query({
-                            active: true,
-                            currentWindow: true
-                        });
-                    }).then(function (tabs) {
-                        // send message to the active tab
-                        return browser.tabs.sendMessage(source_tab_id, {
-                            AcceptedGloveboxSecureKeyOfferToken_replacement: "Glovebox token read.",
-                            CiphertextToPlaintext: "Glbx_marker3",
-                            remove: "true"
-                        });
-                    }).then(function (res) {
-                        // read in the token text
-                        console.debug("###### getHTML response " + JSON.stringify(res));
+                console.debug(JSON.stringify(res));
+
+                //send
+                console.debug("### calling ./content_scripts/RewritePageLinks.js on tab_id=" + source_tab_id);
+
+                browser.tabs.executeScript(source_tab_id, {
+                    file: "./content_scripts/RewritePageLinks.js",
+                    allFrames: true
+                }).then(function (result) {
+                    console.debug("background.js:onExecuted4: We made it ....");
+                    // console.debug("background.js:onExecuted4: result: " + result);
+                    // console.debug("backgroupd.js:onExecuted4:selected_text: " +
+                    // selected_text);
+                    // console.debug("backgroupd.js:onExecuted4:replacement_text: " +
+                    // replacement_text);
+                    // query for the one active tab
+                    return browser.tabs.query({
+                        active: true,
+                        currentWindow: true
                     });
+                }).then(function (tabs) {
+                    // send message to the active tab
+                    return browser.tabs.sendMessage(source_tab_id, {
+                        AcceptedGloveboxSecureKeyOfferToken_replacement: "Glovebox token read.",
+                        CiphertextToPlaintext: "Glbx_marker3",
+                        remove: "true"
+                    });
+                }).then(function (res) {
+                    // read in the token text
+                    console.debug("###### getHTML response " + JSON.stringify(res));
+                });
 
-                } else {}
-
-            });
+            } else {
+                console.debug("no applicable policy");
+            }
 
             // policies are scoped by domain, full qualified domain ( including protocol) and complete URL (except query string)
             //
@@ -215,64 +842,135 @@ browser.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             true_destination_url = skinny_lookup(message.linkurl);
             sendResponse({
                 true_destination_url: true_destination_url,
-                linkUrl: message.linkurl,
+                linkURL: message.linkurl,
                 success: "true"
             });
         }
     } catch (e) {
         console.debug(e);
     }
-
 });
 
-
-let pendingCollectedUrls = [];
-
-browser.contextMenus.onClicked.addListener((info, tab) => {
-    console.debug("background.js: browser.contextMenus.onClicked.addListener");
-    console.debug("background.js: browser.contextMenus.onClicked.addListener:info:" + JSON.stringify(info));
-    console.debug("background.js: browser.contextMenus.onClicked.addListener:tab:" + JSON.stringify(tab));
-
-    /*
-     * When the user has selected from the context meny to revel the true end
-     * point of a url
-     *
-     */
-    if (info.menuItemId == "glovebox-link-reveal") {
-        console.debug("glovebox-link-reveal");
-        // console.debug(info);
-        // console.debug(tab);
-        reveal_true_url_endpoint(info, tab);
-
-    } else if (info.menuItemId == "selected-text-lookup") {
-        console.debug("selected-text-lookup");
-        // console.debug(info);
-        // console.debug(tab);
-        selected_text_lookup(info, tab);
-
-    }
-
-    console.debug("#### request completed");
-});
-
-// add listener to open the admin page when user clicks on the icon in the
-// toolbar
-browser.browserAction.onClicked.addListener(() => {
-    // use this functionality to get a full tabpage
-    browser.tabs.create({
-        url: "/rule-admin.html"
+    
+    // add listener to open the admin page when user clicks on the icon in the
+    // toolbar
+    browser.browserAction.onClicked.addListener(() => {
+        // use this functionality to get a full tabpage
+        browser.tabs.create({
+            url: "/rule-admin.html"
+        });
+        // Can replace the above with a direct referal to the html, in the manifest.
+        // - but this would not provide a full tab-page
+        // "brower_action": {
+        // "default_popup": "navigate-collection.html"
     });
-    // Can replace the above with a direct referal to the html, in the manifest.
-    // - but this would not provide a full tab-page
-    // "brower_action": {
-    // "default_popup": "navigate-collection.html"
 
-});
+function refresh_inmemory_policy_datastore_async(dbname, dbstorename,keyPath) {
+    // read out all policies from the policy database and compare the current in-memory has arrays with the just-read data.
+    // Add what is missing and remove the surplus.
+    return new Promise(
+        function (resolve, reject) {
+     //   console.debug("#####################################" + dbname);
+     //   console.debug("#####################################" + dbstorename);
+      //  console.debug("#####################################" + keyPath);
 
+        try{
+        dump_db_2_hash_async(dbname, dbstorename).then(function (res) {
+            one = res;
+            console.debug(JSON.stringify(one));
 
+            // loop through all returned objects and insert them in the hash array
+            console.debug(one.length);
+            if (one.length > 0){
+            console.debug(one[0]);
+            console.debug(one[0][keyPath]);
+            for (var i = 0; i < one.length; i++) {
+                // copy over the whole object, change this later
+                //ourceHostnamePolicyDB_inmemory[one[i].keyId] = one[i];
+                in_memory_policies[dbname][one[i][keyPath]] = one[i];
+            }
+            }
+            // add functionality for removing any entries no longer present in the database
+            resolve(true);
+        });
+        } catch (e) {
+            console.debug(e);
+        }
+        
+    });
+}
+
+function dump_db_2_hash_async(dbName, storeName3) {
+
+    return new Promise(
+        function (resolve, reject) {
+        // access database
+        console.debug("-------------------------------------");
+
+        console.debug("dump_db access database: " + dbName);
+        var dbRequest = indexedDB.open(dbName);
+
+        //     try {
+        dbRequest.onsuccess = function (event3) {
+            var database3 = event3.target.result;
+
+            //console.debug("access datastore: " + storeName3);
+
+            var transaction3 = database3.transaction([storeName3]);
+            var objectStore3 = transaction3.objectStore(storeName3);
+
+            var allRecords3 = objectStore3.getAll();
+            allRecords3.onsuccess = function () {
+                console.debug("-------------------------------------");
+                console.debug("-------------------------------------");
+
+                const res3 = allRecords3.result;
+                console.debug(res3);
+                console.debug("## results" + JSON.stringify(res3));
+                //listOfKeys = listOfKeys + ',"privateKeys":' + JSON.stringify(res3) + '';
+                console.debug("-------------------------------------");
+                console.debug("-------------------------------------");
+
+                // get private(and their public component) signing keys
+                database3.close();
+                resolve(res3);
+
+            };
+            database3.close();
+
+        }
+        //            dbRequest.close();
+        //      } catch (e) {
+        //         console.debug(e);
+        //         resolve("error");
+        //    }
+    });
+}
+
+/*
+ * Crate an instance IndexedDB
+ * Takes a JSON structure specifying the configuration
+ *
+ * {
+dbname: "sourceUrlRuleDB",
+objectstore: [{
+name: "sourceUrlRuleStore",
+keyPath: "keyId",
+autoIncrement: false,
+index: [{
+n: "keyId",
+o: "keyId",
+unique: "true"
+}
+]
+}
+]
+}
+ *
+ * */
 function create_indexeddb_async(indexedDB, dbconfig) {
 
-    console.debug("database config: " + JSON.stringify(dbconfig));
+    console.debug("# create_indexeddb_async: " + JSON.stringify(dbconfig));
 
     // To do: add logic so as not to try to create tables already present
 
@@ -281,10 +979,10 @@ function create_indexeddb_async(indexedDB, dbconfig) {
         function (resolve, reject) {
 
         console.debug("database config: " + JSON.stringify(dbconfig));
-        console.debug ("database name: "+ dbconfig.dbname );
-        console.debug ("objectstore name: "+ dbconfig.objectstore[0].name );
-        console.debug ("key: "+ dbconfig.objectstore[0].keyPath );
-        console.debug ("index: "+ JSON.stringify(dbconfig.objectstore[0].index[0].unique) );
+        // console.debug("database name: " + dbconfig.dbname);
+        // console.debug("objectstore name: " + dbconfig.objectstore[0].name);
+        // console.debug("key: " + dbconfig.objectstore[0].keyPath);
+        // console.debug("index: " + JSON.stringify(dbconfig.objectstore[0].index[0].unique));
 
         let db;
 
@@ -304,13 +1002,14 @@ function create_indexeddb_async(indexedDB, dbconfig) {
             objectStore.createIndex(dbconfig.objectstore[0].index[0].n, dbconfig.objectstore[0].index[0].o, {
                 unique: dbconfig.objectstore[0].index[0].unique
             });
+            console.debug("completed");
             resolve(true);
         };
         request7.onerror = function (event1) {
             console.debug("dp open request error 201");
         };
         request7.onsuccess = function (event) {
-        	 console.debug("db open success");
+            console.debug("db open success");
             var db_1 = event.target.result;
             console.debug(db_1);
             db_1.onerror = function (event2) {
@@ -327,6 +1026,7 @@ function create_indexeddb_async(indexedDB, dbconfig) {
                 objectStore.createIndex(dbconfig.objectstore[0].index[0].n, dbconfig.objectstore[0].index[0].o, {
                     unique: dbconfig.objectstore[0].index[0].unique
                 });
+                console.debug("completed");
                 resolve(true);
             };
             db_1.onsuccess = function (event3) {
@@ -340,20 +1040,21 @@ function create_indexeddb_async(indexedDB, dbconfig) {
                 objectStore.createIndex(dbconfig.objectstore[0].index[0].n, dbconfig.objectstore[0].index[0].o, {
                     unique: dbconfig.objectstore[0].index[0].unique
                 });
+                console.debug("completed");
                 resolve(true);
             };
+            console.debug("completed");
+            resolve(true);
         };
-       
+
     });
 
 }
 
-
-
-function rules_enforcement(sourcePageUrl, url) {
+function DISABLEDrules_enforcement_async(sourcePageURL, url) {
 
     // console.debug("# rules_enforcement begin");
-    // console.debug("sourcePageUrl: " + sourcePageUrl);
+    // console.debug("sourcePageURL: " + sourcePageURL);
     // console.debug("url: " + url);
 
     // apply rules to generate new URL. The rules are a collection of
@@ -385,11 +1086,11 @@ function rules_enforcement(sourcePageUrl, url) {
         console.debug("source based rewriting");
         // new_url = circumstantial_rules_enforcement(window.location.href,
         // new_url,source_url_rules,source_hostname_rules,source_domain_rules);
-        // new_url = source_rules_enforcement(sourcePageUrl, new_url,
+        // new_url = source_rules_enforcement(sourcePageURL, new_url,
         // source_url_rules,
         // source_hostname_rules, source_domain_rules);
 
-        source_rules_enforcement(sourcePageUrl, new_url).then(function (two) {
+        source_rules_enforcement_async(sourcePageURL, new_url).then(function (two) {
             new_url = two;
             console.debug(new_url);
             // then do destination-based rules
@@ -408,8 +1109,60 @@ function rules_enforcement(sourcePageUrl, url) {
 
 }
 
+//look into policy database for policy regarding this url
+function policy_discovery_for_location(location) {
+    // a mere hit on the URL is sufficient
+    // console.debug("# policy_discovery_for_location (" + location + ")");
+
+    // use this to lookup any rules that may apply to links found on the
+    // page of
+    // this url
+    var protocolhostnameportpath = "";
+    protocolhostnameportpath = location.replace(/^(http[s]*:\/\/)([^\/]*\/)([^\?]*).*/i, '$1$2$3');
+
+    var protocolhostnameport = "";
+    protocolhostnameport = location.replace(/^(http[s]*:\/\/)([^\/]*\/)([^\?]*).*/i, '$1$2');
+
+    var domainport = "";
+    domainport = location.replace(/^http[s]*:\/\/[^\.]*\.([^\/]*)\/([^\?]*).*/i, '$1');
+
+    //  console.debug("lookup: " + domainport);
+
+    // lookup domain fully qualifies URL (no path) and full URL (no querystring)
+    // return true for first "hit"
+
+
+    try {
+
+        var domain_pol = in_memory_policies.sourceDomainPolicyDB[domainport];
+
+        var hostname_pol = in_memory_policies.sourceHostnamePolicyDB[protocolhostnameport];
+
+        var url_pol = in_memory_policies.sourceURLPolicyDB[protocolhostnameportpath];
+        // where any policies returned at all, if so return it(them), otherwise return null
+        if (typeof domain_pol !== 'undefined' || typeof hostname_pol !== 'undefined' || typeof url_pol !== 'undefined') {
+            //console.debug("return policy");
+
+            var ret = {
+                "sourceDomainPolicyDB": domain_pol,
+                "sourceHostnamePolicyDB": hostname_pol,
+                "sourceURLPolicyDB": url_pol
+            };
+            //   console.debug(ret)
+            return ret;
+
+        } else {
+            return null;
+        }
+    } catch (e) {
+        console.debug(e);
+
+    }
+
+}
+
 // look into policy database for policy regarding this url
-function policy_discovery_for_location_async(location) {
+function DISABLEDpolicy_discovery_for_location_async(location) {
     // a mere hit on the URL is sufficient
 
     return new Promise(
@@ -434,13 +1187,23 @@ function policy_discovery_for_location_async(location) {
 
         // sourceDomainRuleStore in sourceDomainRuleDB
         // sourceHostnameRuleStore in sourceHostnameRuleDB
-        // create objectstore sourceUrlRuleStore in sourceUrlRuleDB");
+        // create objectstore sourceURLRuleStore in sourceURLRuleDB");
         console.debug("lookup: " + domainport);
 
         // lookup domain fully qualifies URL (no path) and full URL (no querystring)
         // return true for first "hit"
 
         try {
+
+            var domain_pol = in_memory_policies.sourceDomainPolicyDB[domainport];
+
+            var hostname_pol = in_memory_policies.sourceHostnamePolicyDB[protocolhostnameport];
+
+            var url_pol = in_memory_policies.sourceURLPolicyDB[protocolhostnameportpath];
+
+            console.debug(domain_pol);
+            console.debug(hostname_pol);
+            console.debug(url_pol);
 
             loadFromIndexedDB_async("sourceDomainPolicyDB", "sourceDomainPolicyStore", domainport).then(function (three) {
                 console.debug("########## 0");
@@ -458,7 +1221,7 @@ function policy_discovery_for_location_async(location) {
                     // protocolhostnameport
 
                     return loadFromIndexedDB_async("sourceHostnamePolicyDB", "sourceHostnamePolicyStore", protocolhostnameport);
-                    
+
                 }
 
                 // if anything returned, apply it
@@ -474,8 +1237,8 @@ function policy_discovery_for_location_async(location) {
                     // new_url = execute_rule(one, new_url);
                 } else {
                     console.debug("no hit on hostname");
-                    return loadFromIndexedDB_async("sourceUrlPolicyDB", "sourceUrlPolicyStore", protocolhostnameportpath);
-                    
+                    return loadFromIndexedDB_async("sourceURLPolicyDB", "sourceURLPolicyStore", protocolhostnameportpath);
+
                 }
 
             }).then(function (two) {
@@ -508,16 +1271,72 @@ function policy_discovery_for_location_async(location) {
 
 }
 
-// enforce rules that pertain to links found on the specified address.
-function source_rules_enforcement(location, linkurl) {
+// enfore policy on url
+function apply_policy(url, applicable_policy) {
+    // console.debug("# apply_policy  to url: " + url);
+    // console.debug("# apply_policy  applicable_policy: " + JSON.stringify(applicable_policy));
 
-    console.debug("# source_rules_enforcement begin");
+    var precceding_result = url;
+    var new_url = url;
+    try {
+        var domain_pol = applicable_policy.sourceDomainPolicyDB;
+        if (typeof domain_pol !== 'undefined') {
+            //  console.debug("carry out rule on: " + new_url);
+            //  console.debug(domain_pol);
+            new_url = execute_rule(domain_pol, new_url);
+        }
+        precceding_result = new_url;
+    } catch (e) {
+        new_url = precceding_result;
+    }
+    try {
+
+        var hostname_pol = applicable_policy.sourceHostnamePolicyDB;
+        if (typeof hostname_pol !== 'undefined') {
+            //  console.debug("carry out rule on: " + new_url);
+            //  console.debug(hostname_pol);
+            new_url = execute_rule(hostname_pol, new_url);
+        }
+        precceding_result = new_url;
+
+    } catch (e) {
+        new_url = precceding_result;
+
+    }
+
+    try {
+        var url_pol = applicable_policy.sourceURLPolicyDB;
+        if (typeof url_pol !== 'undefined') {
+            //   console.debug("carry out rule on: " + new_url);
+            //  console.debug(url_pol);
+            new_url = execute_rule(url_pol, new_url);
+        }
+
+    } catch (e) {
+        new_url = precceding_result;
+
+    }
+    //console.debug(domain_pol);
+    //console.debug(hostname_pol);
+    //console.debug(url_pol);
+
+    // console.debug("carry out policy on: " + new_url);
+
+
+    return new_url;
+
+}
+
+// enforce rules that pertain to links found on the specified address.
+function DISABLEDsource_rules_enforcement_async(location, linkurl) {
+
+    console.debug("# source_rules_enforcement_async begin");
 
     var new_url = linkurl;
 
     return new Promise(
         function (resolve, reject) {
-        console.debug("# source_rules_enforcement begin promise");
+        //  console.debug("# source_rules_enforcement begin promise");
 
         // use this to lookup any rules that may apply to links found on the
         // page of
@@ -537,13 +1356,23 @@ function source_rules_enforcement(location, linkurl) {
 
         // sourceDomainRuleStore in sourceDomainRuleDB
         // sourceHostnameRuleStore in sourceHostnameRuleDB
-        // create objectstore sourceUrlRuleStore in sourceUrlRuleDB");
+        // create objectstore sourceURLRuleStore in sourceURLRuleDB");
         console.debug("lookup: " + domainport);
 
         try {
 
-            loadFromIndexedDB_async("sourceDomainRuleDB", "sourceDomainRuleStore", domainport).then(function (three) {
-                console.debug("########## 0");
+            var domain_pol = in_memory_policies.sourceDomainPolicyDB[domainport];
+
+            var hostname_pol = in_memory_policies.sourceHostnamePolicyDB[protocolhostnameport];
+
+            var url_pol = in_memory_policies.sourceURLPolicyDB[protocolhostnameportpath];
+
+            console.debug(domain_pol);
+            console.debug(hostname_pol);
+            console.debug(url_pol);
+
+            loadFromIndexedDB_async("sourceDomainPolicyDB", "sourceDomainPolicyStore", domainport).then(function (three) {
+                //        console.debug("########## 0");
                 // console.debug(three);
 
                 if (three) {
@@ -556,7 +1385,7 @@ function source_rules_enforcement(location, linkurl) {
                 // proceed with looking for more rules scopde for
                 // protocolhostnameport
 
-                return loadFromIndexedDB_async("sourceHostnameRuleDB", "sourceHostnameRuleStore", protocolhostnameport);
+                return loadFromIndexedDB_async("sourceHostnamePolicyDB", "sourceHostnamePolicyStore", protocolhostnameport);
             }).then(function (one) {
 
                 console.debug("########## 1");
@@ -567,7 +1396,7 @@ function source_rules_enforcement(location, linkurl) {
 
                 }
 
-                return loadFromIndexedDB_async("sourceUrlRuleDB", "sourceUrlRuleStore", protocolhostnameportpath);
+                return loadFromIndexedDB_async("sourceURLPolicyDB", "sourceURLPolicyStore", protocolhostnameportpath);
             }).then(function (two) {
                 console.debug("########## 2");
                 // console.debug(two);
@@ -596,7 +1425,7 @@ function source_rules_enforcement(location, linkurl) {
 
 }
 
-function generate_default_link_rules_async() {
+function DISABLEDgenerate_default_link_rules_async() {
 
     console.debug("## generate_default_link_rules begin");
 
@@ -609,38 +1438,321 @@ function generate_default_link_rules_async() {
 
             var p = [];
 
-            p.push(saveToIndexedDB_async('sourceDomainPolicyDB', 'sourceDomainPolicyStore', 'keyId', {
-                keyId: 'HHHyahoo.com',
-                url_match: 'HHHyahoo.com',
-                scope: 'Domain',
-                notes: 'yahoo.com pagelink sanitation policy',
-                createtime: '202001010001'
-            }));
-            
-            
             p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
-                keyId: 'https://mail.yahoo.com/',
-                url_match: 'https://mail.yahoo.com/',
-                scope: 'Hostname',
-                notes: 'test pagelink sanitation policy',
-                createtime: '202001010001'
-            }));
+                    keyId: 'https://outlook.office.com/',
+                    url_match: 'https://outlook.office.com/',
+                    scope: 'Hostname',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.office.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .office.com domain"
+                                }
+                            ],
+                            "notes": "Allow .office.com domains as local"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.microsoft.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .microsoft.com domain"
+                                }
+                            ],
+                            "notes": "Allow .microsoft.com hostnames too."
+                        }
+                    ],
+                    notes: 'Disable external links in Oulook emails',
+                    createtime: '202001010001'
+                }));
 
-             p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
+            p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
+                    keyId: 'https://mail.yahoo.com/',
+                    url_match: 'https://mail.yahoo.com/',
+                    scope: 'Hostname',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.yahoo.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URL in the .yahoo.com domain"
+                                }
+                            ],
+                            "notes": "Allow .yahoo.com domains as local"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.yimg.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URL in the .yimg.com domain"
+                                }
+                            ],
+                            "notes": "Allow yimg.com domain too."
+                        }
+                    ],
+                    notes: 'Disable external links in Yahoo mail',
+                    createtime: '202001010001'
+                }));
+
+            p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
+                    keyId: 'https://mail.exchange.microsoft.com/',
+                    url_match: 'https://mail.exchange.microsoft.com/',
+                    scope: 'Hostname',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.microsoft.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .microsoft.com domain"
+                                }
+                            ],
+                            "notes": "Allow .microsoft.com hostnames"
+                        }
+                    ],
+                    notes: 'Disable external links in MS Exchange mail',
+                    createtime: '202001010001'
+                }));
+            p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
                     keyId: 'https://mail.google.com/',
                     url_match: 'https://mail.google.com/',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.google.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .google.com domain"
+                                }
+                            ],
+                            "notes": "Allow .google.com hostnames"
+                        }
+                    ],
+                    notes: 'Disable external links in GMail messages',
+                    createtime: '202001010001'
+                }));
+
+            p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
+                    keyId: 'https://mail.aol.com/',
+                    url_match: 'https://mail.aol.com/',
                     scope: 'Hostname',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.aol.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .aol.com domain"
+                                }
+                            ],
+                            "notes": "Allow .aol.com hostnames"
+                        }
+                    ],
+                    notes: 'Disable external links in AOL messages',
+                    createtime: '202001010001'
+                }));
+            p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
+                    keyId: 'https://mail.yandex.com/',
+                    url_match: 'https://mail.yandex.com/',
+                    scope: 'Hostname',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.yandex.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .yandex.com domain"
+                                }
+                            ],
+                            "notes": "Allow .yandex.com hostnames"
+                        }
+                    ],
+                    notes: 'Disable external links in Yandex messages',
+                    createtime: '202001010001'
+                }));
+
+            p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
+                    keyId: 'https://mail.protonmail.com/',
+                    url_match: 'https://mail.protonmail.com/',
+                    scope: 'Hostname',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.protonmail.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .protonmail.com domain"
+                                }
+                            ],
+                            "notes": "Allow .protonmail.com hostnames"
+                        }
+                    ],
+                    notes: 'Disable external links in Protonmail messages',
+                    createtime: '202001010001'
+                }));
+
+            p.push(saveToIndexedDB_async('sourceHostnamePolicyDB', 'sourceHostnamePolicyStore', 'keyId', {
+                    keyId: 'https://mail.tutanota.com/',
+                    url_match: 'https://mail.tutanota.com/',
+                    scope: 'Hostname',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.tutanota.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .tutanota.com domain"
+                                }
+                            ],
+                            "notes": "Allow .tutanota.com hostnames"
+                        }
+                    ],
+                    notes: 'Disable external links in Tutanota messages',
+                    createtime: '202001010001'
+                }));
+
+            p.push(saveToIndexedDB_async('sourceDomainPolicyDB', 'sourceDomainPolicyStore', 'keyId', {
+                    keyId: 'bbc.com',
+                    url_match: 'bbc.com',
+                    scope: 'Domain',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "Disable all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.bbc.com)D$1Dg",
+                                    "notes": "default"
+                                }
+                            ],
+                            "notes": "Allow all .bbc.com domains as local"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.bbci.co.uk)D$1Dg",
+                                    "notes": "default"
+                                }
+                            ],
+                            "notes": "Allow .bbci.co.uk domains too."
+                        }
+                    ],
                     notes: 'test pagelink sanitation policy',
                     createtime: '202001010001'
                 }));
 
-             p.push(saveToIndexedDB_async('sourceDomainPolicyDB', 'sourceDomainPolicyStore', 'keyId', {
-                keyId: 'mozilla.org',
-                url_match: 'mozilla.org',
-                scope: 'Domain',
-                notes: 'test pagelink sanitation policy',
-                createtime: '202001010001'
-            }));
+            p.push(saveToIndexedDB_async('sourceDomainPolicyDB', 'sourceDomainPolicyStore', 'keyId', {
+                    keyId: 'bbc.co.uk',
+                    url_match: 'bbc.co.uk',
+                    scope: 'Domain',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "Disable all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.bbc.co.uk)D$1Dg",
+                                    "notes": "default"
+                                }
+                            ],
+                            "notes": "Allow all .bbc.co.uk domains as local"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.bbci.co.uk)D$1Dg",
+                                    "notes": "default"
+                                }
+                            ],
+                            "notes": "Allow .bbci.co.uk domains too."
+                        }
+                    ],
+                    notes: 'test pagelink sanitation policy',
+                    createtime: '202001010001'
+                }));
+
+            p.push(saveToIndexedDB_async('sourceURLPolicyDB', 'sourceURLPolicyStore', 'keyId', {
+                    keyId: 'https://www.zoho.com/mail',
+                    url_match: 'https://www.zoho.com/mail',
+                    scope: 'Hostname',
+                    "steps": [{
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^(https)Ddisabled$1Dg",
+                                    "notes": "prefix the protocol for all fully qualified URLs"
+                                }
+                            ],
+                            "notes": "Disable all external links"
+                        }, {
+                            "procedure": "regexp",
+                            "parameters": [{
+                                    "value": "sD^disabled(https://[^/]*.zoho.com)D$1Dg",
+                                    "notes": "remove the disabled prefix from the protocol for URLs in the .zoho.com domain"
+                                }
+                            ],
+                            "notes": "Allow .zoho.com hostnames"
+                        }
+                    ],
+                    notes: 'Disable external links in Zoho messages',
+                    createtime: '202001010001'
+                }));
+
             console.debug(p);
             // Using .catch:
             Promise.all(p)
@@ -658,61 +1770,49 @@ function generate_default_link_rules_async() {
     }
 }
 
+function setup_default_policies_async() {
+    console.debug("setup_default_policies_async begin");
+
+    try {
+
+        return new Promise(
+            function (resolve, reject) {
+
+            var p = [];
+
+            for (var i = 0; i < default_policies.length; i++) {
+                p.push(saveToIndexedDB_async(default_policies[i].dbname, default_policies[i].dbstore, default_policies[i].keyPath, default_policies[i].policy));
+
+            }
+
+            // console.debug(p);
+            // Using .catch:
+            Promise.all(p)
+            .then(values => {
+                console.debug(values);
+
+                resolve(values);
+            })
+            .catch(error => {
+                console.error(error.message)
+            });
+        });
+    } catch (f) {
+        console.error(f);
+    }
+
+}
+
 function indexeddb_setup_async(indexedDB) {
-    console.debug("# indexeddb_setup_async start");
+
     return new Promise(
         function (resolve, reject) {
-
-        var index_db_config = [{
-                dbname: "sourceDomainPolicyDB",
-                objectstore: [{
-                        name: "sourceDomainPolicyStore",
-                        keyPath: "keyId",
-                        autoIncrement: false,
-                        index: [{
-                                n: "keyId",
-                                o: "keyId",
-                                unique: "true"
-                            }
-                        ]
-                    }
-                ]
-            }, {
-                dbname: "sourceHostnamePolicyDB",
-                objectstore: [{
-                        name: "sourceHostnamePolicyStore",
-                        keyPath: "keyId",
-                        autoIncrement: false,
-                        index: [{
-                                n: "keyId",
-                                o: "keyId",
-                                unique: "true"
-                            }
-                        ]
-                    }
-                ]
-            }, {
-                dbname: "sourceUrlPolicyDB",
-                objectstore: [{
-                        name: "sourceUrlPolicyStore",
-                        keyPath: "keyId",
-                        autoIncrement: false,
-                        index: [{
-                                n: "keyId",
-                                o: "keyId",
-                                unique: "true"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ];
 
         try {
             var p = [];
 
             for (var i = 0; i < index_db_config.length; i++) {
-            	 console.debug("create_indexeddb_async (" + JSON.stringify(index_db_config[i]) + ")");
+
                 p.push(create_indexeddb_async(indexedDB, index_db_config[i]));
             }
 
@@ -720,7 +1820,6 @@ function indexeddb_setup_async(indexedDB) {
             Promise.all(p)
             .then(values => {
                 console.debug(values);
-                
                 resolve(values);
             })
             .catch(error => {
@@ -765,14 +1864,11 @@ function destination_rules_enforcement(location, linkurl) {
         var domainport = "";
         domainport = linkurl.replace(/^http[s]*:\/\/[^\.]*\.([^\/]*)\/([^\?]*).*/i, '$1');
 
-        // sourceDomainRuleStore in sourceDomainRuleDB
-        // sourceHostnameRuleStore in sourceHostnameRuleDB
-        // create objectstore sourceUrlRuleStore in sourceUrlRuleDB");
         console.debug("lookup: " + domainport);
 
         try {
 
-            loadFromIndexedDB_async("destinationDomainRuleDB", "destinationDomainRuleStore", domainport).then(function (three) {
+            loadFromIndexedDB_async("destinationDomainPolicyDB", "destinationDomainPolicyStore", domainport).then(function (three) {
                 console.debug("########## 0");
                 // console.debug(three);
 
@@ -786,7 +1882,7 @@ function destination_rules_enforcement(location, linkurl) {
                 // proceed with looking for more rules scopde for
                 // protocolhostnameport
 
-                return loadFromIndexedDB_async("destinationHostnameRuleDB", "destinationHostnameRuleStore", protocolhostnameport);
+                return loadFromIndexedDB_async("destinationHostnamePolicyDB", "destinationHostnamePolicyStore", protocolhostnameport);
             }).then(function (one) {
 
                 console.debug("########## 1");
@@ -797,7 +1893,7 @@ function destination_rules_enforcement(location, linkurl) {
 
                 }
 
-                return loadFromIndexedDB_async("destinationUrlRuleDB", "destinationUrlRuleStore", protocolhostnameportpath);
+                return loadFromIndexedDB_async("destinationURLPolicyDB", "destinationURLPolicyStore", protocolhostnameportpath);
             }).then(function (two) {
                 console.debug("########## 2");
                 // console.debug(two);
@@ -837,10 +1933,114 @@ function execute_rule_set(rule_set, url) {
     return new_url;
 }
 
+function execute_rule_step(rule_step, url) {
+    // console.debug("execute_rule_step");
+    var new_url = "";
+    new_url = url;
+    // console.debug("### apply step: " + JSON.stringify(rule_step) + " to " +
+    // new_url);
+
+    // syntax is STEP NAME ( PARAMETER VALUE)
+    var step_name = "";
+
+    step_name = rule_step.procedure;
+    // console.debug("step_name: " + step_name);
+    var parameter_value = "";
+    try {
+        // consider only cases with at most a single parameter
+        parameter_value = rule_step.parameters[0].value;
+
+    } catch (e) {
+        console.error(e);
+    }
+
+    //  console.debug("parameter_value: " + parameter_value);
+    switch (step_name) {
+    case 'regexp':
+        try {
+            // make allowances for g and i settings
+            // Parse parameter which follows the sed-syntax
+            // This means that the second character is the delimiter
+            var delimiter = "";
+            delimiter = parameter_value.replace(/^s(.).*/i, '$1');
+            var flags_ext = new RegExp("[s]*" + delimiter + "[^" + delimiter + "]*" + delimiter + "[^" + delimiter + "]*" + delimiter + "(.*)$");
+            // console.debug("flags_ext: " + flags_ext);
+            var flags = "";
+            flags = parameter_value.replace(flags_ext, '$1').replace(/ /g, '');
+            // console.debug("flags: " + flags);
+            var pattern_ext = new RegExp("[s]*" + delimiter + "([^" + delimiter + "]*)" + delimiter + ".*$");
+            // console.debug("pattern_ext: " + pattern_ext);
+            var pattern = "";
+            pattern = parameter_value.replace(pattern_ext, '$1');
+            // console.debug("pattern: " + pattern);
+            var val_ext = new RegExp(".*" + delimiter + "([^" + delimiter + "]*)" + delimiter + "[ gi]*$");
+            var val = "";
+            val = parameter_value.replace(val_ext, '$1');
+            // console.debug("val_ext: " + val_ext)
+            // console.debug("return val: " + val)
+            // console.debug(new RegExp(pattern, flags));
+            new_url = new_url.replace(new RegExp(pattern, flags), val);
+        } catch (e) {
+            console.debug(e);
+        }
+        break;
+    case 'qs_param':
+        // console.debug(new_url);
+        // console.debug("get query string parameter named: " + parameter_value);
+        var u = "";
+        // remove everything infront of and behind the parameter
+        var reg_exp2 = new RegExp(".*[?&]" + parameter_value + "=([^&]*).*");
+        // console.debug(reg_exp2);
+        u = new_url.replace(reg_exp2, '$1');
+        // console.debug(u);
+        // remove everything infront of the parameter
+        var reg_exp1 = new RegExp(".*[\?&]" + parameter_value + "=([^&]*)$");
+        // console.debug(reg_exp1);
+        // console.debug(u);
+        // u = url.replace(reg_exp1, '$1' );
+        // new_url = url_rewrite_step_qs_param(new_url, parameter_value);
+        new_url = u;
+        break;
+    case 'uri_decode':
+        try {
+            // for some reason decodeURI does not work
+            new_url = new_url.replace(/%40/g, '@').replace(/%3A/g, ':').replace(/%3B/g, ';').replace(/%3C/g, '<').replace(/%3D/g, '=').replace(/%3E/g, '>').replace(/%3F/g, '?').replace(/%20/g, ' ').replace(/%21/g, '!').replace(/%22/g, '"').replace(/%23/g, '#').replace(/%25/g, '%').replace(/%26/g, '&').replace(/%28/g, '(').replace(/%29/g, ')').replace(/%2A/g, '*').replace(/%2B/g, '+').replace(/%2C/g, ',').replace(/%2D/g, '-').replace(/%2E/g, '.').replace(/%2F/g, '/').replace(/%5B/g, '[').replace(/%5C/g, '\\').replace(/%5D/g, ']').replace(/%5E/g, '^').replace(/%5F/g, '_').replace(/%60/g, "'").replace(/%25/g, '%');
+        } catch (e) { // catches a malformed URI
+            console.error(e);
+        }
+        break;
+    case 'base64_decode':
+        console.debug(new_url);
+        new_url = atob(new_url);
+        break;
+    case 'JSON_path':
+        console.debug(new_url);
+        console.debug(JSON.parse(new_url)[parameter_value]);
+
+        new_url = JSON.parse(new_url)[parameter_value];
+        break;
+    case 'replace_with':
+        console.debug(new_url);
+        new_url = parameter_value;
+        break;
+    case 'skinny_lookup':
+        // lookup the URL and if it returns a HTTP 403 redirect and a Location
+        // header, insert that.
+        // Itterate up to three times incase on redirect leads to another.
+        console.debug("lookup the URL without revealing anything");
+        // new_url = parameter_value;
+        break;
+    default:
+    }
+
+    return new_url;
+
+}
+
 function loadFromIndexedDB_async(dbName, storeName, id) {
-     console.debug("loadFromIndexedDB_async:dbname: " + dbName);
-    console.debug("loadFromIndexedDB_async:storeName: " + storeName);
-     console.debug("loadFromIndexedDB_async:id: " + id);
+    //  console.debug("loadFromIndexedDB_async:dbname: " + dbName);
+    //  console.debug("loadFromIndexedDB_async:storeName: " + storeName);
+    //  console.debug("loadFromIndexedDB_async:id: " + id);
 
     return new Promise(
         function (resolve, reject) {
@@ -913,17 +2113,27 @@ function execute_rule(rule, url) {
         // step-order is essential
         // the output of one is the input of the next
 
-        for (var i = 0; i < rule.steps.length; i++) {
-            // console.debug("### apply step: " + JSON.stringify(rule.steps[i]) + " to " +
-            // new_url);
-            new_url = execute_rule_step(rule.steps[i], new_url);
+        // console.debug(rule.steps.length);
+        if (rule.steps.length > 0) {
+
+            for (var i = 0; i < rule.steps.length; i++) {
+                // console.debug("### apply step: " + JSON.stringify(rule.steps[i]) + " to " +
+                // new_url);
+                new_url = execute_rule_step(rule.steps[i], new_url);
+            }
+        } else {
+            console.debug("no step defined - all rules should have at least one step so output a blank - this error scenario is handle above");
+            new_url = "";
+
         }
         // console.debug("### apply step: " + rule + " to " + new_url);
     } catch (e) {
-        console.error(e);
+        console.error("no step defined - all rules should have at least one step so output a blank - this error scenario is handle above");
+        new_url = "";
     }
     return new_url;
 }
+
 
 
 function saveToIndexedDB_async(dbName, storeName, keyId, object) {
@@ -954,14 +2164,11 @@ function saveToIndexedDB_async(dbName, storeName, keyId, object) {
             console.error(error);
 
         }
-        console.debug("saveToIndexedDB_async: 1 dbRequest=" + dbRequest);
 
         dbRequest.onerror = function (event) {
             console.debug("saveToIndexedDB:error.open:db " + dbName);
             reject(Error("IndexedDB database error"));
         };
-
-        console.debug("saveToIndexedDB: 2" + JSON.stringify(dbRequest));
 
         dbRequest.onupgradeneeded = function (event) {
             console.debug("saveToIndexedDB: 21");
@@ -972,15 +2179,11 @@ function saveToIndexedDB_async(dbName, storeName, keyId, object) {
                 });
         };
 
-        console.debug("saveToIndexedDB: 3" + JSON.stringify(dbRequest));
         try {
 
             dbRequest.onsuccess = function (event) {
-                console.debug("saveToIndexedDB: 31");
                 var database = event.target.result;
-                console.debug("saveToIndexedDB: 32");
                 var transaction = database.transaction([storeName], 'readwrite');
-                console.debug("saveToIndexedDB: 33");
                 var objectStore = transaction.objectStore(storeName);
                 console.debug("saveToIndexedDB:objectStore put: " + JSON.stringify(object));
 
@@ -988,7 +2191,7 @@ function saveToIndexedDB_async(dbName, storeName, keyId, object) {
                 // already
                 // exists
 
-                console.debug("saveToIndexedDB:objectRequest: " + JSON.stringify(objectRequest));
+                //  console.debug("saveToIndexedDB:objectRequest: " + JSON.stringify(objectRequest));
 
                 objectRequest.onerror = function (event) {
                     console.debug("saveToIndexedDB:error: " + storeName);
