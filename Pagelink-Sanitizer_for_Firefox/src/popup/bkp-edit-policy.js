@@ -34,14 +34,10 @@ browser.storage.sync.get(['object_id', 'indexedDbName', 'objectStoreName'], func
         // The html should be disturbed as little as possible since the "html-niceness"should
         // properly be created by a separate editor - as far as possible.
 
-        document.querySelectorAll('table.single_rule_table[indexedDbName="indexedDbName"]')[0].setAttribute("indexedDbName",indexedDbName);
-        document.querySelectorAll('table.single_rule_table[objectStoreName="objectStoreName"]')[0].setAttribute("objectStoreName", objectStoreName);
-        
 
-//        document.querySelectorAll("table.single_rule_table tr td[j_name=scope]")[0].textContent = editThisObject.scope;
+        document.querySelectorAll("table.single_rule_table tr td[j_name=scope]")[0].textContent = editThisObject.scope;
 
         document.querySelectorAll("table.single_rule_table tr td[j_name=url_match]")[0].textContent = editThisObject.url_match;
-        
         document.querySelectorAll("table.single_rule_table tr td[j_name=notes]")[0].textContent = editThisObject.notes;
 
         document.querySelectorAll("table.single_rule_table tr td[j_name=createtime]")[0].textContent = editThisObject.createtime;
@@ -56,7 +52,18 @@ browser.storage.sync.get(['object_id', 'indexedDbName', 'objectStoreName'], func
 
         }
 
-    
+        // scope
+        if (editThisObject.scope == "Hostname") {
+
+            document.querySelectorAll("table.single_rule_table tr td[j_name=scope]")[0].textContent = "Hostname";
+
+        } else if (editThisObject.scope == "Domain") {
+
+            document.querySelectorAll("table.single_rule_table tr td[j_name=scope]")[0].textContent = "Domain";
+
+        } else if (editThisObject.scope == "URL") {
+            document.querySelectorAll("table.single_rule_table tr td[j_name=scope]")[0].textContent = "URL";
+        }
 
         // set up the table with steps
         // pic the first line in the table of steps
@@ -262,33 +269,44 @@ function attachButtonEventlisteners(node) {
         });
     }
 
-
-    // for add parameter button(s)
-    var htmlElements5 = node.getElementsByClassName("addparameter_button");
-    // loop through all edit steps and their buttons to attach event
-    // listener to each one
-    for (var i = 0; i < htmlElements5.length; i++) {
-        htmlElements5[i].addEventListener('click',
-            function (event) {
-            addParameter(event);
-        });
-    }
 }
 
 function create_processing_type_dropdown_list() {
 
     var step_function_list = document.createElement('select');
     var opt_1 = document.createElement('option');
-    opt_1.setAttribute("value", "regexp");
-    opt_1.appendChild(document.createTextNode("RegExp"));
+    opt_1.setAttribute("value", "base64_decode");
+    opt_1.appendChild(document.createTextNode("base64 decoding"));
     step_function_list.appendChild(opt_1);
 
+    var opt_2 = document.createElement('option');
+    opt_2.setAttribute("value", "qs_param");
+    opt_2.appendChild(document.createTextNode("querystring parameter"));
+    step_function_list.appendChild(opt_2);
+
+    var opt_3 = document.createElement('option');
+    opt_3.setAttribute("value", "JSON_path");
+    opt_3.appendChild(document.createTextNode("JSON path"));
+    step_function_list.appendChild(opt_3);
+
+    var opt_4 = document.createElement('option');
+    opt_4.setAttribute("value", "regexp");
+    opt_4.appendChild(document.createTextNode("reg exp"));
+    step_function_list.appendChild(opt_4);
+
+    var opt_5 = document.createElement('option');
+    opt_5.setAttribute("value", "uri_decode");
+    opt_5.appendChild(document.createTextNode("uri decode"));
+    step_function_list.appendChild(opt_5);
+
+    var opt_6 = document.createElement('option');
+    opt_6.setAttribute("value", "replace_with");
+    opt_6.appendChild(document.createTextNode("replace with"));
+    step_function_list.appendChild(opt_6);
 
     return step_function_list;
 
 }
-
-
 
 function editStep(event) {
 
@@ -391,12 +409,12 @@ function make_object_rw(object_table) {
     console.debug("#make_object_rw");
     console.debug(object_table);
     // make parameter values shown to be editable - user typed values
-    swap_class(object_table, "updatable_user_typed_value", "updatable_user_typed_value_editable");
-    swap_class(object_table, "updatable_user_selected_value", "updatable_user_selected_value_editable");
+    swap_class(object_table, "updatable_user_typed_value", "updatable_user_typed_value_editing");
+    swap_class(object_table, "updatable_user_selected_value", "updatable_user_selected_value_editing");
 
     // make parameter values editable in the html - user typed values
 
-    var edit_cells3 = object_table.querySelectorAll("[class=updatable_user_typed_value_editable]");
+    var edit_cells3 = object_table.querySelectorAll("[class=updatable_user_typed_value_editing]");
     var n = 0;
     while (n < edit_cells3.length && n < 50) {
         console.debug(edit_cells3[n]);
@@ -412,12 +430,12 @@ function make_step_rw(step_row) {
     console.debug(step_row);
 
     // make parameter values shown to be editable - user typed values
-    swap_class(step_row, "updatable_user_typed_value", "updatable_user_typed_value_editable");
-    swap_class(step_row, "updatable_user_selected_value", "updatable_user_selected_value_editable");
+    swap_class(step_row, "updatable_user_typed_value", "updatable_user_typed_value_editing");
+    swap_class(step_row, "updatable_user_selected_value", "updatable_user_selected_value_editing");
 
     // make parameter values editable in the html - user typed values
 
-    var edit_cells3 = step_row.querySelectorAll("[class=updatable_user_typed_value_editable]");
+    var edit_cells3 = step_row.querySelectorAll("[class=updatable_user_typed_value_editing]");
     var n = 0;
     while (n < edit_cells3.length && n < 50) {
         console.debug(edit_cells3[n]);
@@ -449,8 +467,8 @@ function make_all_ro(object_table) {
     // make parameter values shown to be editable - user typed values
 
     try {
-        swap_class(document, "updatable_user_typed_value_editable", "updatable_user_typed_value");
-        swap_class(document, "updatable_user_selected_value_editable", "updatable_user_selected_value");
+        swap_class(document, "updatable_user_typed_value_editing", "updatable_user_typed_value");
+        swap_class(document, "updatable_user_selected_value_editing", "updatable_user_selected_value");
     } catch (e) {
         console.debug(e);
     }
@@ -481,8 +499,8 @@ function make_step_ro(step_row) {
     console.debug("make_step_ro");
     // make parameter values shown to be editable - user typed values
 
-    swap_class(step_row, "updatable_user_typed_value_editable", "updatable_user_typed_value");
-    swap_class(step_row, "updatable_user_selected_value_editable", "updatable_user_selected_value");
+    swap_class(step_row, "updatable_user_typed_value_editing", "updatable_user_typed_value");
+    swap_class(step_row, "updatable_user_selected_value_editing", "updatable_user_selected_value");
 
     // make parameter values editable in the html - user typed values
 
@@ -531,8 +549,6 @@ function editPolicy(event) {
 
 }
 
-
-
 /*
  * make form fields non-ediatble, change the visible aspect to reflect this (change class attributes). Save the object back to the dataasbe.
  * */
@@ -548,26 +564,38 @@ function savePolicyChanges(event) {
     // keyid
     var keyId = document.querySelector("table.single_rule_table tr td[j_name=url_match]").textContent;
 
-   
-//    table_obj.setAttribute("indexedDbName", indexedDbName);
- //   table_obj.setAttribute("objectStoreName", objectStoreName);
-    var indexedDbName = "";
-    
-    indexedDbName = document.querySelectorAll("table.single_rule_table[indexedDbName]")[0].getAttribute("indexedDbName");
-    console.debug(indexedDbName);
-    objectStoreName = document.querySelectorAll("table.single_rule_table[objectStoreName]")[0].getAttribute("objectStoreName");
+    // policy scope
 
-    console.debug(objectStoreName);
-   
-    
-  
+    var scope = document.querySelector("#scope_table").querySelector("td[j_name=scope]").textContent;
+
+    console.debug(scope);
+    var db = "";
+    var store = "";
+    // database(and store) for the rule is given by the scope. Each scope has a different database.
+    if (scope == "Hostname") {
+
+        db = 'sourceHostnamePolicyDB';
+        store = 'sourceHostnamePolicyStore';
+
+    } else if (scope == "Domain") {
+
+        db = 'sourceDomainPolicyDB';
+        store = 'sourceDomainPolicyStore';
+
+    } else if (scope == "URL") {
+        db = 'sourceURLPolicyDB';
+        store = 'sourceURLPolicyStore';
+    }
+
+    console.debug(db);
+    console.debug(store);
 
     // remove objectionable characters - TO DO
 
 
     var new_obj = read_object_from_form();
 
-    saveUpdateToIndexedDB_async(indexedDbName, objectStoreName, 'keyId', new_obj).then(function(){
+    saveUpdateToIndexedDB_async(db, store, 'keyId', new_obj).then(function(){
     	
     	
 
@@ -576,7 +604,7 @@ function savePolicyChanges(event) {
 	
 	// send message to background, to request a refresh of the in-memory databases for this policy object
     	browser.runtime.sendMessage({
-    		request: {"policy":"single_update","update_details":{"database":saveUpdateToIndexedDB_async,"datastore":objectStoreName,"object":new_obj} }
+    		request: {"policy":"single_update","update_details":{"database":db,"datastore":store,"object":new_obj} }
     	}, function (response) {
     		console.debug("message sent to backgroup.js with response: " + JSON.stringify(response));
     	});
@@ -902,51 +930,6 @@ function deleteStep(event) {
 
 }
 
-
-
-function addParameter(event) {
-    console.debug("# addParameter");
-    var this_row = event.target.parentNode.parentNode;
-
-    // locate parameter table in this row, 
-    var parameter_table = this_row.querySelector("table.parameters_table");
-    
-    var last_table_row   = parameter_table.querySelector("tr:last-child");
-
-    console.debug("last parameter row");
-    console.debug(last_table_row);
-    
-    // and add a row to it
-    
-    console.debug("parameter row");
-    var newRow = document.createElement('tr');
-    newRow.setAttribute("class", "parameter");
-
-//    tr class="parameter"><td class="updatable_user_typed_value" j_name="value">N/A</td><td class="updatable_user_typed_value" j_name="notes">N/A</td></tr>
-    
-    // first cell if which rank this step has in the overall policy object
-
-    var newcell_l = document.createElement('td');
-    newcell_l.setAttribute("class", "updatable_user_typed_value");
-    newcell_l.setAttribute("j_name", "value");
-    newcell_l.textContent = "new value";
-
-    newRow.appendChild(newcell_l);
-
-    // table cell for the procedure
-    var newcell_2 = document.createElement('td');
-    newcell_2.setAttribute("class", "updatable_user_typed_value");
-    newcell_2.setAttribute("j_name", "notes");
-    newRow.appendChild(newcell_2);
-
-    parameter_table.querySelector("tr:last-child").insertAdjacentElement('afterend', newRow);
-
-    
-    //parameter_table.appendChild(newRow);
-    
-    
-}
-
 function downStep(event) {
     console.debug("# move down step");
     var this_row = event.target.parentNode.parentNode;
@@ -1259,23 +1242,26 @@ function saveUpdateToIndexedDB_async(dbName, storeName, keyId, object) {
             console.debug(error);
 
         }
-       // console.debug("saveUpdateToIndexedDB_async: 1 dbRequest=" + dbRequest);
+        console.debug("saveUpdateToIndexedDB_async: 1 dbRequest=" + dbRequest);
 
         dbRequest.onerror = function (event) {
             console.debug("saveUpdateToIndexedDB_async:error.open:db " + dbName);
             reject(Error("IndexedDB database error"));
         };
 
-    try {
+        console.debug("saveUpdateToIndexedDB_async: 2" + JSON.stringify(dbRequest));
+
+        console.debug("saveUpdateToIndexedDB_async: 3" + JSON.stringify(dbRequest));
+        try {
 
             dbRequest.onsuccess = function (event) {
-               // console.debug("saveUpdateToIndexedDB_async: 31");
+                console.debug("saveUpdateToIndexedDB_async: 31");
                 var database = event.target.result;
-                //console.debug("saveUpdateToIndexedDB_async: 32");
+                console.debug("saveUpdateToIndexedDB_async: 32");
                 var transaction = database.transaction([storeName], 'readwrite');
-               // console.debug("saveUpdateToIndexedDB_async: 33");
+                console.debug("saveUpdateToIndexedDB_async: 33");
                 var objectStore = transaction.objectStore(storeName);
-               // console.debug("saveUpdateToIndexedDB_async:objectStore put: " + JSON.stringify(object));
+                console.debug("saveUpdateToIndexedDB_async:objectStore put: " + JSON.stringify(object));
 
                 var objectRequest = objectStore.put(object); // Overwrite if
                 // already

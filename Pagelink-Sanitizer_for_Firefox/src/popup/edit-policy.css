@@ -191,7 +191,7 @@ td.updatable_user_typed_value {
 /* typed parameter value - editable
 */
 
-td.updatable_user_typed_value_editing {
+td.updatable_user_typed_value_editable {
 	background: #FFF;
 	border: 1px solid #963;
 	width: 100px
@@ -207,7 +207,7 @@ td.updatable_user_selected_value {
 
 /* selected parameter value - editable
 */
-td.updatable_user_selected_value_editing {
+td.updatable_user_selected_value_editable {
 	background: #FFF;
 	border: 1px solid #963;
 	width: 100px

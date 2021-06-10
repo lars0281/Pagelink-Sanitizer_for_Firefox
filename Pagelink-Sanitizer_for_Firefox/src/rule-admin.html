@@ -37,22 +37,25 @@ Not much. The links to outside local domain on the target pages are no longer op
 Or use the Link Looker add-on to make the disabled link accessible. Just right-click on the link and select "reveal the true endpoint of this link"
 
 Simply place the cursor over the link in question right click on the mouse. In the context menu selection "reveal true endpoint of this link"
-<br/>A small message box will appear where your cursor is. It will contain the endpoint of this URL. If there are any re-writing rules that pertain to this URL, they will have been applied. 
-You can click on this link directly. Some user may prefer to take he opportunity open this link in a private browser window (righ-click in the link and select this option from context menu). The message box will close automatically after 30 seconds. 
+<br/>A small message box will appear where your cursor is. It will contain the endpoint of this URL. If there are any re-writing rules that pertain to this URL, they would have been applied. 
+You can click on this link directly. Some users may prefer to take the opportunity open this link in a private browser window (righ-click in the link and select this option from context menu). The message box will close automatically after 30 seconds. 
 <p/>
 <h3>What happens</h3>
 Any links found inside the page that that with http or https and contain another domain name than the local one, gets "disabled" added to the beginning of them. Where before they started with "http.." they will now start with "disabledhttp..". The browser can not make sense of this and the links will not be called. 
 This is not restricted to only the typical "clickable links" (The "a href" in html) but includes all all elements that can contain external links. </br> The "HREF" attribute on
  elements A, AREA, LINK and BASE. And the SRC attribute on elements SCRIPT, IMG, IFRAM, EMBED, AUDIO, INPUT, SOURCE, TRACK and VIDEO. 
  Her the SRC attribute of the SCRIPT and IMG tags are of particular importance as links contained here are called automatically by the browser; No user action required. 
+<p/>Web links may also be called in the background by embedded javascript - you will not see these on-screen. Such hidden web calls is the more typical scenario in cases of attempted hacking and attacks against the user. The capability of this add-on to block such calls therefore it's most critical feature. 
+
 
 </p>
 
-	<h1>page identification policies</h1>
-
+	<h2>policies</h2>
+	
 
 <p/>
-Rules are grouped according to source, on what page the links are found, and destination, where the links point to. But in all cases the rewriting applies to the where the link points to, not where it is from. 
+Policies are grouped according to source, on what page the links are found. but the rewriting applies to the where the link points to, not where it is from. 
+
 
 			
 			

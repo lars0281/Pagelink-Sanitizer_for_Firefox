@@ -1,6 +1,5 @@
-export {deleteObject,
-render_tables,
-updateObject
+export {
+render_tables
 }
 
 import {
@@ -21,17 +20,19 @@ from "./utils/glovebox_utils.js"
 
 
 import {
-	attach_main_button_eventlisteners,
+	addObject,
 	CompareRowOfNumbers,
     CompareRowOfText,
 	createTable,
     createTableRow,
+    deleteObject,
     GetDateSortingKey,
     reflow,
     setup_database_objects_table_async,
     sortColumn,
     SortTable,
     TableLastSortedColumn,
+    updateObject,
     writeTableCell,
     writeTableHeaderRow,
     writeTableNode,
@@ -297,16 +298,45 @@ function addNewPolicy(event) {
     console.debug("## addNewPolicy");
     console.debug(event);
  
+    // identify which database and datastore the new object goes to
+    var indexedDbName = null;
 
-    var indexedDbName = event.target.parentNode.getAttribute('indexedDbName');
+    var container = event.target.parentNode;
 
-    var objectStoreName = event.target.parentNode.getAttribute('objectStoreName');
+    try {
+        indexedDbName = container.querySelector("table.scrollTable").getAttribute('indexedDbName');
+    } catch (e) {
+        console.debug(e);
+    }
+
+    var objectStoreName = null;
+
+    try {
+        objectStoreName = container.querySelector("table.scrollTable").getAttribute('objectStoreName');
+    } catch (e) {
+        console.debug(e);
+    }
+
     console.debug("objectStoreName: " + objectStoreName);
     console.debug("indexedDbName: " + indexedDbName);
-    if (indexedDbName == "sourceURLPolicyDB"){
+
+    
+    browser.storage.sync.set({
+        'indexedDbName': indexedDbName,
+        'objectStoreName': objectStoreName
+    });
+    //.then(function (res) {
+
+      
+   
+
+   
+
+    
+        if(/URL/i.test(indexedDbName) ){
     	var w = window.open('popup/add-url-policy.html', 'test01', 'width=1000,height=600,resizeable,scrollbars');
 
-    }else if (indexedDbName == "sourceDomainPolicyDB"){
+    }else if(/Domain/.test(indexedDbName) ){
 
     	var w = window.open('popup/add-domain-policy.html', 'test01', 'width=1000,height=600,resizeable,scrollbars');
 
@@ -318,105 +348,17 @@ function addNewPolicy(event) {
     
     
     
- 	
+   
 	
-	
-	console.debug(w);
 
-    
-    
-}
-
-
-//this updateObject is written generically
-//but what it will display will be particular to the implementation
-
-function updateObject(event) {
- console.debug("# updateObject");
- console.debug(event);
-
-
- var object_id = event.target.parentNode.parentNode.getAttribute('object_id');
- 
- var indexedDbName = event.target.parentNode.parentNode.parentNode.parentNode.getAttribute('indexedDbName');
-
- var objectStoreName = event.target.parentNode.parentNode.parentNode.parentNode.getAttribute('objectStoreName');
-
-
- // get the id of the object which is to be modified from the table row object
- 
- 
- 
- console.debug("objectStoreName: " + objectStoreName);
- console.debug("object_id: " + object_id);
-
- // var popup = window.open("<html><title>sub</title></html>");
-
-
- // create popup window where fields can be edited
-
-
- // two different popups depending on wheather not this is a rule based on
- // source URL (where the link is found)
- // or destination (where the link goes to)
-
- // Add the url to the pending urls and open a popup.
- // pendingCollectedURLs.push(info.srcURL);
- var popup = null;
- try {
-
-	 
-
-	 // open up the popup
- 	var obj;
- 	// read object out of database
-
- 	loadFromIndexedDB_async(indexedDbName,objectStoreName,object_id).then(function (res){
- 		obj = res;
- 		console.debug(obj);
-
-     
-  // place the identity of the object to be edited in storage
-     
- 		return  browser.storage.sync.set({ 'object_id': object_id , 'indexedDbName': indexedDbName, 'objectStoreName': objectStoreName });
- 	}).then(function(g){
- 		
-     	console.debug(g);
-     	//});
-     
-     // the popup is now open
-
-    // console.debug("read back: " + browser.storage.sync.get(['editThisRule', 'type', 'key']));
-     //browser.storage.sync.get(['editThisRule', 'type', 'key']).then(function(e){
-    // 	console.debug(e);
-    // 	});
-
-     //console.debug("read back: " + browser.storage.sync.get(['editThisRule', 'type', 'key'], function (data){
-    // 	console.debug(data);
-     //} ));
-     
-     // send message to background, and have background send it to the popup
-     //	browser.runtime.sendMessage({
-     //		request: {"sendRule":"toEditPopup","editThisObject": obj}
-     //	}, function (response) {
-     //		console.debug("message sent to backgroup.js with response: " + JSON.stringify(response));
-     //	});
-     
-	});
-
-  	var w = window.open('popup/edit-policy.html', 'test01', 'width=1000,height=600,resizeable,scrollbars');
- 	console.debug(w);
-
-
- } catch (err) {
-     console.error(err);
- }
-
+   
+    //});
 }
 
 
 
-function deleteObject(event) {
+
+function DISABLEdeleteObject(event) {
     console.debug("##deleteObject");
     console.debug(event);
 
@@ -448,6 +390,119 @@ function deleteObject(event) {
 }
 
 
+function attach_main_button_eventlisteners() {
+
+    console.debug("# attach_main_button_eventlisteners");
+
+    // attach event listeners to page buttons
+
+    try {
+        document.getElementById("button_generate_default").addEventListener('click',
+            function () {
+            console.debug("### button.generate-source-hostname-rule begin");
+            setup_default_policies_async().then();
+            console.debug("### button.generate-source-hostname-rule end");
+            // update the page tables
+            render_tables();
+
+        });
+
+    } catch (e) {
+        console.debug(e);
+    }
+
+    // add refresh button
+    try {
+        document.getElementById("refresh_policies_button").addEventListener('click', () => {
+            // document.querySelector("button.backup-all-keys").addEventListener('click',
+            // ()
+            // => {
+            console.debug("refresh policies");
+
+            refresh_policies_async().then(function (e) {
+                console.debug("refresh complete");
+                console.debug(e);
+            });
+        }, false);
+    } catch (e) {
+        console.debug(e)
+    }
+
+    // add backup button
+    try {
+        document.getElementById("backup-all-rules_button").addEventListener('click', () => {
+            // document.querySelector("button.backup-all-keys").addEventListener('click',
+            // ()
+            // => {
+            console.debug("backup rules ");
+
+            backup_all_databases_async().then(function (e) {
+                console.debug("backup complete");
+                console.debug(e);
+            });
+        }, false);
+    } catch (e) {
+        console.debug(e)
+    }
+
+    // add event listener for import button
+
+    console.debug("setup import form");
+    try {
+        document.getElementById('import-rules_button').addEventListener('click', function (evt) {
+            console.debug("### reading import file");
+
+            var input = document.createElement('input');
+            input.type = 'file';
+
+            input.onchange = e => {
+
+                // getting a hold of the file reference
+                var file = e.target.files[0];
+
+                // setting up the reader
+                var reader = new FileReader();
+                reader.readAsText(file, 'UTF-8');
+
+                // here we tell the reader what to do when it's done
+                // reading...
+                reader.onload = readerEvent => {
+                    var content = readerEvent.target.result; // this is
+                    // the
+                    // content!
+                    console.debug(content);
+
+                    var data = JSON.parse(content);
+
+                    var imp = [];
+
+                    // fine contains an array of database dumps
+                    for (var j = 0; j < data.length; j++) {
+                        console.debug(data[j].database);
+
+                        imp.push(import_into_db_async(data[j].database, data[j].datastore, 'keyId', data[j].data));
+
+                    }
+
+                    Promise.all(imp)
+                    .then(function (values) {
+                        console.debug(JSON.stringify(values));
+
+                    });
+
+                }
+
+            }
+
+            input.click();
+
+        });
+
+    } catch (e) {
+        console.debug(e);
+    }
+
+}
 
 
 
